@@ -320,9 +320,8 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def _on_space(self) -> None:
-        if self.timer.running:
-            self._on_stop()
-        else:
+        # Пробел — только СТАРТ. Стоп — только кнопкой мыши.
+        if not self.timer.running:
             self._on_start()
 
     @Slot()
