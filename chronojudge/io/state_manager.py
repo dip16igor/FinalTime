@@ -2,25 +2,26 @@
 
 import json
 import os
-from datetime import timedelta
 from pathlib import Path
-from typing import Optional
 
 from chronojudge.core import (
-    CompetitionState, Participant, FinishRecord,
-    parse_time_str, format_time_short
+    CompetitionState,
+    FinishRecord,
+    Participant,
+    format_time_short,
+    parse_time_str,
 )
 
 
 class StateManager:
     """Управление сохранением/восстановлением состояния приложения."""
-    
+
     def __init__(self, logger):
         self.logger = logger
         self.data_dir = self._get_data_dir()
         self.state_file = self.data_dir / "state.json"
         self.data_dir.mkdir(parents=True, exist_ok=True)
-    
+
     def _get_data_dir(self) -> Path:
         """Папка для данных: %APPDATA%/ChronoJudge/ или ./data/"""
         if os.name == 'nt':
@@ -28,7 +29,7 @@ class StateManager:
             if appdata:
                 return Path(appdata) / "ChronoJudge"
         return Path.cwd() / "data"
-    
+
     def save(self, state: CompetitionState) -> None:
         """Сохранить состояние в JSON."""
         try:
@@ -62,24 +63,24 @@ class StateManager:
                 "pending_number": state.pending_number,
                 "pending_manual_time": state.pending_manual_time,
             }
-            
+
             with open(self.state_file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
-            
-            self.logger.log("DEBUG", f"Состояние сохранено: {self.state_file}")
-            
+
+            self.logger.log("DEBUG", f"State saved: {self.state_file}")
+
         except Exception as e:
-            self.logger.log("ERROR", f"Ошибка сохранения состояния: {e}")
-    
-    def load(self) -> Optional[CompetitionState]:
+            self.logger.log("ERROR", f"Error saving state: {e}")
+
+    def load(self) -> CompetitionState | None:
         """Загрузить состояние из JSON."""
         if not self.state_file.exists():
             return None
-        
+
         try:
-            with open(self.state_file, 'r', encoding='utf-8') as f:
+            with open(self.state_file, encoding='utf-8') as f:
                 data = json.load(f)
-            
+
             # Участники
             participants = []
             for p_data in data.get("participants", []):
@@ -91,7 +92,7 @@ class StateManager:
                     full_name=p_data["full_name"],
                     start_offset=start_offset,
                 ))
-            
+
             # Финиши - нужно восстановить ссылки на участников
             finishes = []
             for f_data in data.get("finishes", []):
@@ -101,11 +102,11 @@ class StateManager:
                     if p.number == f_data["participant_number"]:
                         participant = p
                         break
-                
+
                 if participant is None:
                     self.logger.log("WARNING", f"Участник #{f_data['participant_number']} не найден при восстановлении")
                     continue
-                
+
                 timer_time = parse_time_str(f_data["timer_time"])
                 manual_time = None
                 if f_data.get("manual_time"):
@@ -113,7 +114,7 @@ class StateManager:
                 final_time = None
                 if f_data.get("final_time"):
                     final_time = parse_time_str(f_data["final_time"])
-                
+
                 finishes.append(FinishRecord(
                     participant=participant,
                     timer_time=timer_time,
@@ -125,13 +126,13 @@ class StateManager:
                     created_at=f_data.get("created_at", ""),
                     is_edited=f_data.get("is_edited", False),
                 ))
-            
+
             timer_elapsed = parse_time_str(data.get("timer_elapsed", "0"))
             timer_running = data.get("timer_running", False)
             common_start = None
             if data.get("common_start_offset"):
                 common_start = parse_time_str(data["common_start_offset"])
-            
+
             state = CompetitionState(
                 registration_file=data.get("registration_file", ""),
                 participants=participants,
@@ -142,16 +143,16 @@ class StateManager:
                 pending_number=data.get("pending_number", ""),
                 pending_manual_time=data.get("pending_manual_time", ""),
             )
-            
-            self.logger.log("INFO", f"Состояние восстановлено: {len(participants)} участников, {len(finishes)} финишей")
+
+            self.logger.log("INFO", f"State restored: {len(participants)} participants, {len(finishes)} finishes")
             return state
-            
+
         except Exception as e:
-            self.logger.log("ERROR", f"Ошибка загрузки состояния: {e}")
+            self.logger.log("ERROR", f"Error loading state: {e}")
             return None
-    
+
     def clear(self) -> None:
-        """Удалить сохранённое состояние."""
+        """Delete saved state."""
         if self.state_file.exists():
             self.state_file.unlink()
-            self.logger.log("INFO", "Сохранённое состояние очищено")
+            self.logger.log("INFO", "Saved state cleared")

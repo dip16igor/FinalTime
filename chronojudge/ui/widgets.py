@@ -1,30 +1,34 @@
 """Пользовательские виджеты для ввода и отображения."""
 
 from datetime import timedelta
-from typing import Optional
-from PySide6.QtCore import Qt, Signal, QRegularExpression
-from PySide6.QtGui import QRegularExpressionValidator, QKeyEvent
+
+from PySide6.QtCore import QRegularExpression, Qt, Signal
+from PySide6.QtGui import QKeyEvent, QRegularExpressionValidator
 from PySide6.QtWidgets import (
-    QLineEdit, QTableWidget, QTableWidgetItem,
-    QAbstractItemView, QHeaderView, QMenu
+    QAbstractItemView,
+    QHeaderView,
+    QLineEdit,
+    QMenu,
+    QTableWidget,
+    QTableWidgetItem,
 )
 
 
 class NumberLineEdit(QLineEdit):
     """Поле ввода только для цифр (номер участника)."""
-    
+
     finish_requested = Signal()  # Enter нажат
-    
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setPlaceholderText("Номер участника")
         self.setMaxLength(6)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
+
         # Валидатор: только цифры
         validator = QRegularExpressionValidator(QRegularExpression(r"[0-9]*"), self)
         self.setValidator(validator)
-        
+
         # Стиль
         self.setStyleSheet("""
             QLineEdit {
@@ -37,20 +41,20 @@ class NumberLineEdit(QLineEdit):
                 border-color: #4a90d9;
             }
         """)
-    
+
     def keyPressEvent(self, event: QKeyEvent) -> None:
         if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             self.finish_requested.emit()
             event.accept()
         else:
             super().keyPressEvent(event)
-    
-    def get_number(self) -> Optional[int]:
+
+    def get_number(self) -> int | None:
         text = self.text().strip()
         if text.isdigit():
             return int(text)
         return None
-    
+
     def clear_input(self) -> None:
         self.clear()
         self.setFocus()
@@ -58,16 +62,16 @@ class NumberLineEdit(QLineEdit):
 
 class ManualTimeLineEdit(QLineEdit):
     """Поле ввода ручного времени в формате HHH:MM:SS.sss."""
-    
+
     finish_requested = Signal()  # Enter нажат
-    
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setPlaceholderText("HHH:MM:SS.sss")
         self.setMaxLength(13)  # HHH:MM:SS.sss
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setInputMask("999:99:99.999")
-        
+
         self.setStyleSheet("""
             QLineEdit {
                 font-size: 18px;
@@ -80,19 +84,19 @@ class ManualTimeLineEdit(QLineEdit):
                 border-color: #4a90d9;
             }
         """)
-    
+
     def keyPressEvent(self, event: QKeyEvent) -> None:
         if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             self.finish_requested.emit()
             event.accept()
         else:
             super().keyPressEvent(event)
-    
-    def get_time(self) -> Optional[timedelta]:
+
+    def get_time(self) -> timedelta | None:
         text = self.text().strip()
         if not text or text == "000:00:00.000":
             return None
-        
+
         try:
             parts = text.split(":")
             if len(parts) != 3:
@@ -100,21 +104,21 @@ class ManualTimeLineEdit(QLineEdit):
             hours = int(parts[0])
             minutes = int(parts[1])
             seconds = float(parts[2])
-            
+
             if minutes >= 60 or seconds >= 60:
                 return None
-            
+
             return timedelta(hours=hours, minutes=minutes, seconds=seconds)
         except ValueError:
             return None
-    
+
     def set_time(self, td: timedelta) -> None:
         total = td.total_seconds()
         hours = int(total // 3600)
         minutes = int((total % 3600) // 60)
         seconds = total % 60
         self.setText(f"{hours:03d}:{minutes:02d}:{seconds:06.3f}")
-    
+
     def clear_input(self) -> None:
         self.clear()
         self.setFocus()
@@ -122,7 +126,7 @@ class ManualTimeLineEdit(QLineEdit):
 
 class EditableTableWidgetItem(QTableWidgetItem):
     """Ячейка таблицы, редактируемая по двойному клику."""
-    
+
     def __init__(self, text: str = "", editable: bool = True):
         super().__init__(text)
         if not editable:
@@ -132,7 +136,7 @@ class EditableTableWidgetItem(QTableWidgetItem):
 
 class ResultsTable(QTableWidget):
     """Таблица результатов с редактированием по двойному клику."""
-    
+
     COLUMNS = [
         ("Место", 60, False),
         ("Номер", 80, True),
@@ -143,23 +147,23 @@ class ResultsTable(QTableWidget):
         ("Штраф (баллы)", 90, True),
         ("Итоговое время", 130, False),
     ]
-    
+
     cell_changed = Signal(int, int, str)  # row, col, new_value
-    
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self._setup_table()
         self.itemChanged.connect(self._on_item_changed)
-    
+
     def _setup_table(self) -> None:
         self.setColumnCount(len(self.COLUMNS))
         self.setHorizontalHeaderLabels([c[0] for c in self.COLUMNS])
-        
+
         header = self.horizontalHeader()
         for i, (_, width, _) in enumerate(self.COLUMNS):
             header.setSectionResizeMode(i, QHeaderView.ResizeMode.Fixed)
             self.setColumnWidth(i, width)
-        
+
         self.setAlternatingRowColors(True)
         self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
@@ -169,7 +173,7 @@ class ResultsTable(QTableWidget):
         )
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self._show_context_menu)
-        
+
         # Стиль
         self.setStyleSheet("""
             QTableWidget {
@@ -190,29 +194,29 @@ class ResultsTable(QTableWidget):
                 background-color: #d0e8ff;
             }
         """)
-    
+
     def _on_item_changed(self, item: QTableWidgetItem) -> None:
         self.cell_changed.emit(item.row(), item.column(), item.text())
-    
+
     def _show_context_menu(self, pos) -> None:
         menu = QMenu(self)
         delete_action = menu.addAction("Удалить запись")
         action = menu.exec(self.viewport().mapToGlobal(pos))
         if action == delete_action:
             self.removeRow(self.currentRow())
-    
+
     def add_result(self, record, place: int) -> int:
         """Добавить запись результата в таблицу."""
         row = self.rowCount()
         self.insertRow(row)
-        
+
         # Форматируем времена
         from chronojudge.core import format_time_short
-        
+
         timer_str = format_time_short(record.timer_time)
         manual_str = format_time_short(record.manual_time) if record.manual_time else ""
         final_str = format_time_short(record.final_time) if record.final_time else ""
-        
+
         items_data = [
             (str(place), False),
             (str(record.participant.number), True),
@@ -223,21 +227,21 @@ class ResultsTable(QTableWidget):
             (str(record.penalty_points), True),
             (final_str, False),
         ]
-        
+
         for col, (text, editable) in enumerate(items_data):
             item = EditableTableWidgetItem(text, editable)
             self.setItem(row, col, item)
-        
+
         return row
-    
+
     def update_row(self, row: int, record, place: int) -> None:
         """Обновить существующую строку."""
         from chronojudge.core import format_time_short
-        
+
         timer_str = format_time_short(record.timer_time)
         manual_str = format_time_short(record.manual_time) if record.manual_time else ""
         final_str = format_time_short(record.final_time) if record.final_time else ""
-        
+
         data = [
             str(place),
             str(record.participant.number),
@@ -248,7 +252,7 @@ class ResultsTable(QTableWidget):
             str(record.penalty_points),
             final_str,
         ]
-        
+
         for col, text in enumerate(data):
             item = self.item(row, col)
             if item:
@@ -256,7 +260,7 @@ class ResultsTable(QTableWidget):
                 self.blockSignals(True)
                 item.setText(text)
                 self.blockSignals(False)
-    
+
     def get_row_data(self, row: int) -> dict:
         """Получить данные строки как словарь."""
         return {
