@@ -45,6 +45,9 @@ class NumberLineEdit(QLineEdit):
     def keyPressEvent(self, event: QKeyEvent) -> None:
         if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             self.finish_requested.emit()
+            # Enter не должен переводить фокус на следующее поле
+            # Tab делает это, Enter - только финиш
+            self.setFocus()
             event.accept()
         else:
             super().keyPressEvent(event)
