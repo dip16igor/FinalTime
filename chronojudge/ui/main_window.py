@@ -180,6 +180,7 @@ class MainWindow(QMainWindow):
         self.number_edit = NumberLineEdit()
         self.number_edit.setFixedWidth(150)
         self.number_edit.finish_requested.connect(self._on_finish)
+        self.number_edit.textChanged.connect(self._update_finish_button)
         input_layout.addWidget(self.number_edit, 0, 1)
 
         # Ручное время
