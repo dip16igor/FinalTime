@@ -130,7 +130,8 @@ class EditableTableWidgetItem(QTableWidgetItem):
     def __init__(self, text: str = "", editable: bool = True):
         super().__init__(text)
         if not editable:
-            self.setFlags(self.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            # Используем базовые флаги без ItemIsEditable, чтобы избежать рекурсии self.flags()
+            self.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
         self.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
 
 

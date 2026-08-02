@@ -477,9 +477,13 @@ class MainWindow(QMainWindow):
             self.status_bar.show_error(f"Ошибка экспорта: {e}")
 
     def _refresh_table(self) -> None:
-        self.results_table.setRowCount(0)
-        for record in self.finishes:
-            self.results_table.add_result(record, record.place)
+        self.results_table.blockSignals(True)
+        try:
+            self.results_table.setRowCount(0)
+            for record in self.finishes:
+                self.results_table.add_result(record, record.place)
+        finally:
+            self.results_table.blockSignals(False)
 
     def _autosave(self) -> None:
         state = CompetitionState(
