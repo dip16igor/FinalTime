@@ -1,0 +1,117 @@
+[project]
+name = "chronojudge"
+version = "1.0.0"
+description = "Судейский хронометраж и учет результатов соревнований"
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "MIT"}
+authors = [
+    {name = "ChronoJudge Team"}
+]
+keywords = ["chronometer", "judge", "competition", "timer", "sports"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Win32 (MS Windows)",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Utilities",
+]
+
+dependencies = [
+    "PySide6>=6.7.0",
+    "openpyxl>=3.1.0",
+    "python-dateutil>=2.9.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-qt>=4.2.0",
+    "ruff>=0.3.0",
+    "mypy>=1.8.0",
+]
+build = [
+    "pyinstaller>=6.5.0",
+]
+
+[project.scripts]
+chronojudge = "main:main"
+
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["chronojudge*"]
+
+[tool.pyinstaller]
+# Основные настройки для сборки
+name = "ChronoJudge_v{version}"
+onefile = true
+windowed = true
+icon = "assets/icon.ico"
+add-data = [
+    "assets/*;assets",
+    "version.txt;.",
+]
+hidden-imports = [
+    "PySide6.QtCore",
+    "PySide6.QtGui",
+    "PySide6.QtWidgets",
+    "openpyxl",
+    "dateutil",
+    "dateutil.parser",
+    "dateutil.tz",
+]
+exclude-module = [
+    "tkinter",
+    "matplotlib",
+    "numpy",
+    "scipy",
+    "pandas",
+    "PIL",
+]
+# Оптимизация
+strip = true
+upx = true
+upx-dir = ""
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+select = ["E", "F", "I", "W", "UP", "B", "C4", "ARG", "PTH", "T20", "SIM", "RET", "ERA", "PD", "PGH", "PL", "TRY", "NPY", "RSE", "FA", "FURB"]
+ignore = ["E501", "B008"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+indent-width = 4
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+strict_optional = true
+
+[tool.pytest.ini_options]
+qt_api = "pyside6"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.0.0",
+    "pytest-qt>=4.2.0",
+    "ruff>=0.3.0",
+    "mypy>=1.8.0",
+    "pyinstaller>=6.5.0",
+]
