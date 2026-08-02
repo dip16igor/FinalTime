@@ -1,6 +1,7 @@
 """Экспорт отчётов в Excel и CSV."""
 
 import csv
+from datetime import date
 from pathlib import Path
 
 import openpyxl
@@ -8,7 +9,7 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
 from chronojudge import get_version
-from chronojudge.core import FinishRecord, format_time_short
+from chronojudge.core import AgeCategory, FinishRecord, format_time_short
 
 
 class Exporter:
@@ -21,7 +22,9 @@ class Exporter:
         self,
         finishes: list[FinishRecord],
         output_dir: str,
-        registration_file: str = ""
+        registration_file: str = "",
+        competition_date: date | None = None,
+        categories: list[AgeCategory] | None = None
     ) -> str:
         """Экспорт в красивый Excel-файл."""
         wb = openpyxl.Workbook()
@@ -52,29 +55,36 @@ class Exporter:
         bronze_fill = PatternFill(start_color='CD7F32', end_color='CD7F32', fill_type='solid')
 
         # === ЗАГОЛОВОК ОТЧЁТА ===
-        ws.merge_cells('A1:H1')
+        ws.merge_cells('A1:I1')
         ws['A1'] = "ПРОТОКОЛ РЕЗУЛЬТАТОВ СОРЕВНОВАНИЙ"
         ws['A1'].font = title_font
         ws['A1'].alignment = Alignment(horizontal='center', vertical='center')
         ws.row_dimensions[1].height = 35
 
-        ws.merge_cells('A2:H2')
+        ws.merge_cells('A2:I2')
         ws['A2'] = f"Сгенерировано ChronoJudge v{get_version()}"
         ws['A2'].font = subtitle_font
         ws['A2'].alignment = Alignment(horizontal='center')
 
-        if registration_file:
-            ws.merge_cells('A3:H3')
-            ws['A3'] = f"Файл регистрации: {Path(registration_file).name}"
+        if competition_date:
+            ws.merge_cells('A3:I3')
+            ws['A3'] = f"Дата соревнований: {competition_date.strftime('%d.%m.%Y')}"
             ws['A3'].font = subtitle_font
             ws['A3'].alignment = Alignment(horizontal='center')
             header_row = 5
         else:
             header_row = 4
 
+        if registration_file:
+            ws.merge_cells(f'A{header_row}:I{header_row}')
+            ws[f'A{header_row}'] = f"Файл регистрации: {Path(registration_file).name}"
+            ws[f'A{header_row}'].font = subtitle_font
+            ws[f'A{header_row}'].alignment = Alignment(horizontal='center')
+            header_row += 1
+
         # === ЗАГОЛОВКИ ТАБЛИЦЫ ===
         headers = [
-            "Место", "Номер", "ФИО участника",
+            "Место", "Номер", "ФИО участника", "Категория",
             "Время таймера", "Ручное время",
             "Штраф (сек)", "Штраф (баллы)", "Итоговое время"
         ]
@@ -105,10 +115,16 @@ class Exporter:
             manual_str = format_time_short(record.manual_time) if record.manual_time else ""
             final_str = format_time_short(record.final_time) if record.final_time else ""
 
+            # Категория
+            category_str = "-"
+            if competition_date and categories and record.participant.date_of_birth:
+                category_str = record.participant.category_label(competition_date, categories)
+
             row_data = [
                 place,
                 record.participant.number,
                 record.participant.full_name,
+                category_str,
                 timer_str,
                 manual_str,
                 record.penalty_seconds,
@@ -130,7 +146,7 @@ class Exporter:
                     cell.fill = row_fill
 
         # === НАСТРОЙКА ШИРИНЫ КОЛОНОК ===
-        column_widths = [8, 10, 35, 15, 15, 12, 14, 16]
+        column_widths = [8, 10, 35, 12, 15, 15, 12, 14, 16]
         for i, width in enumerate(column_widths, 1):
             ws.column_dimensions[get_column_letter(i)].width = width
 
@@ -151,7 +167,9 @@ class Exporter:
     def export_csv(
         self,
         finishes: list[FinishRecord],
-        output_dir: str
+        output_dir: str,
+        competition_date: date | None = None,
+        categories: list[AgeCategory] | None = None
     ) -> str:
         """Export to CSV."""
         output_path = Path(output_dir) / f"Report_ChronoJudge_v{get_version()}.csv"
@@ -161,7 +179,7 @@ class Exporter:
 
             # Header
             writer.writerow([
-                "Place", "Number", "Name",
+                "Place", "Number", "Name", "Category",
                 "Timer Time", "Manual Time",
                 "Penalty (sec)", "Penalty (pts)", "Final Time"
             ])
@@ -172,10 +190,15 @@ class Exporter:
                 manual_str = format_time_short(record.manual_time) if record.manual_time else ""
                 final_str = format_time_short(record.final_time) if record.final_time else ""
 
+                category_str = "-"
+                if competition_date and categories and record.participant.date_of_birth:
+                    category_str = record.participant.category_label(competition_date, categories)
+
                 writer.writerow([
                     record.place,
                     record.participant.number,
                     record.participant.full_name,
+                    category_str,
                     timer_str,
                     manual_str,
                     record.penalty_seconds,

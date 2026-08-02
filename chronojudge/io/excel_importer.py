@@ -5,7 +5,7 @@ from pathlib import Path
 
 import openpyxl
 
-from chronojudge.core import Participant, parse_time_offset
+from chronojudge.core import Participant, parse_time_offset, parse_date, Gender
 
 
 class ExcelImporter:
@@ -15,10 +15,11 @@ class ExcelImporter:
         self.logger = logger
 
         # Настраиваемые индексы столбцов (0-based)
-        # Можно вынести в конфиг позже
         self.col_number = 0      # Номер участника
         self.col_name = 1        # ФИО
         self.col_start = 2       # Стартовое время (опционально)
+        self.col_dob = 3         # Дата рождения (опционально)
+        self.col_gender = 4      # Пол (опционально)
 
     def load(self, file_path: str) -> tuple[list[Participant], timedelta | None]:
         """Загружает участников из Excel.
@@ -63,10 +64,33 @@ class ExcelImporter:
                             if start_offset:
                                 has_personal_starts = True
 
+                # Дата рождения
+                date_of_birth = None
+                if len(row) > self.col_dob:
+                    raw_dob = row[self.col_dob]
+                    if raw_dob is not None:
+                        dob_str = str(raw_dob).strip()
+                        if dob_str and dob_str.lower() not in ("", "none", "null", "-"):
+                            try:
+                                date_of_birth = parse_date(dob_str)
+                            except ValueError as e:
+                                self.logger.log("WARNING", f"Строка {row_idx}: ошибка даты рождения - {e}")
+
+                # Пол
+                gender = Gender.UNKNOWN
+                if len(row) > self.col_gender:
+                    raw_gender = row[self.col_gender]
+                    if raw_gender is not None:
+                        gender_str = str(raw_gender).strip()
+                        if gender_str:
+                            gender = Gender.from_string(gender_str)
+
                 participant = Participant(
                     number=number,
                     full_name=name,
-                    start_offset=start_offset
+                    start_offset=start_offset,
+                    date_of_birth=date_of_birth,
+                    gender=gender
                 )
                 participants.append(participant)
 
@@ -77,18 +101,21 @@ class ExcelImporter:
         if not participants:
             raise ValueError("Не найдено ни одного участника в файле")
 
-        # Если есть персональные старты, общий старт не используется
-        # (но можно оставить как фоллбек)
-        if not has_personal_starts:
-            # Можно добавить логику чтения общего старта из отдельной ячейки
-            pass
-
-        self.logger.log("INFO", f"Loaded participants: {len(participants)}, personal starts: {sum(1 for p in participants if p.has_personal_start)}")
+        self.logger.log("INFO", f"Loaded participants: {len(participants)}, personal starts: {sum(1 for p in participants if p.has_personal_start)}, with DOB: {sum(1 for p in participants if p.date_of_birth)}")
 
         return participants, common_start
 
-    def set_column_mapping(self, number: int, name: int, start: int = -1) -> None:
+    def set_column_mapping(
+        self,
+        number: int,
+        name: int,
+        start: int = -1,
+        dob: int = -1,
+        gender: int = -1
+    ) -> None:
         """Настройка маппинга столбцов (0-based)."""
         self.col_number = number
         self.col_name = name
         self.col_start = start
+        self.col_dob = dob
+        self.col_gender = gender

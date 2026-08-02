@@ -1,6 +1,6 @@
 """Пользовательские виджеты для ввода и отображения."""
 
-from datetime import timedelta
+from datetime import date, timedelta
 
 from PySide6.QtCore import QRegularExpression, Qt, Signal
 from PySide6.QtGui import QKeyEvent, QRegularExpressionValidator
@@ -12,6 +12,8 @@ from PySide6.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
 )
+
+from chronojudge.core import AgeCategory, format_time_short
 
 
 class NumberLineEdit(QLineEdit):
@@ -144,12 +146,13 @@ class ResultsTable(QTableWidget):
     COLUMNS = [
         ("Место", 60, False),
         ("Номер", 80, True),
-        ("ФИО", 250, False),
-        ("Время таймера", 120, False),
-        ("Ручное время", 120, True),
-        ("Штраф (с)", 80, True),
-        ("Штраф (баллы)", 90, True),
-        ("Итоговое время", 130, False),
+        ("ФИО", 220, False),
+        ("Категория", 80, False),  # Новая колонка
+        ("Время таймера", 110, False),
+        ("Ручное время", 110, True),
+        ("Штраф (с)", 70, True),
+        ("Штраф (баллы)", 80, True),
+        ("Итоговое время", 120, False),
     ]
 
     cell_changed = Signal(int, int, str)  # row, col, new_value
@@ -209,22 +212,31 @@ class ResultsTable(QTableWidget):
         if action == delete_action:
             self.removeRow(self.currentRow())
 
-    def add_result(self, record, place: int) -> int:
+    def add_result(
+        self,
+        record,
+        place: int,
+        competition_date: date | None = None,
+        categories: list[AgeCategory] | None = None
+    ) -> int:
         """Добавить запись результата в таблицу."""
         row = self.rowCount()
         self.insertRow(row)
-
-        # Форматируем времена
-        from chronojudge.core import format_time_short
 
         timer_str = format_time_short(record.timer_time)
         manual_str = format_time_short(record.manual_time) if record.manual_time else ""
         final_str = format_time_short(record.final_time) if record.final_time else ""
 
+        # Категория
+        category_str = "-"
+        if competition_date and categories and record.participant.date_of_birth:
+            category_str = record.participant.category_label(competition_date, categories)
+
         items_data = [
             (str(place), False),
             (str(record.participant.number), True),
             (record.participant.full_name, False),
+            (category_str, False),  # Категория
             (timer_str, False),
             (manual_str, True),
             (str(record.penalty_seconds), True),
@@ -238,18 +250,28 @@ class ResultsTable(QTableWidget):
 
         return row
 
-    def update_row(self, row: int, record, place: int) -> None:
+    def update_row(
+        self,
+        row: int,
+        record,
+        place: int,
+        competition_date: date | None = None,
+        categories: list[AgeCategory] | None = None
+    ) -> None:
         """Обновить существующую строку."""
-        from chronojudge.core import format_time_short
-
         timer_str = format_time_short(record.timer_time)
         manual_str = format_time_short(record.manual_time) if record.manual_time else ""
         final_str = format_time_short(record.final_time) if record.final_time else ""
+
+        category_str = "-"
+        if competition_date and categories and record.participant.date_of_birth:
+            category_str = record.participant.category_label(competition_date, categories)
 
         data = [
             str(place),
             str(record.participant.number),
             record.participant.full_name,
+            category_str,
             timer_str,
             manual_str,
             str(record.penalty_seconds),
@@ -260,7 +282,6 @@ class ResultsTable(QTableWidget):
         for col, text in enumerate(data):
             item = self.item(row, col)
             if item:
-                # Блокируем сигналы во время программного обновления
                 self.blockSignals(True)
                 item.setText(text)
                 self.blockSignals(False)
@@ -271,9 +292,10 @@ class ResultsTable(QTableWidget):
             "place": self.item(row, 0).text() if self.item(row, 0) else "",
             "number": self.item(row, 1).text() if self.item(row, 1) else "",
             "name": self.item(row, 2).text() if self.item(row, 2) else "",
-            "timer_time": self.item(row, 3).text() if self.item(row, 3) else "",
-            "manual_time": self.item(row, 4).text() if self.item(row, 4) else "",
-            "penalty_seconds": self.item(row, 5).text() if self.item(row, 5) else "0",
-            "penalty_points": self.item(row, 6).text() if self.item(row, 6) else "0",
-            "final_time": self.item(row, 7).text() if self.item(row, 7) else "",
+            "category": self.item(row, 3).text() if self.item(row, 3) else "",
+            "timer_time": self.item(row, 4).text() if self.item(row, 4) else "",
+            "manual_time": self.item(row, 5).text() if self.item(row, 5) else "",
+            "penalty_seconds": self.item(row, 6).text() if self.item(row, 6) else "0",
+            "penalty_points": self.item(row, 7).text() if self.item(row, 7) else "0",
+            "final_time": self.item(row, 8).text() if self.item(row, 8) else "",
         }

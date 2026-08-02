@@ -3,8 +3,11 @@
 import sys
 from pathlib import Path
 
-# Добавляем путь к проекту для импорта версии
-sys.path.insert(0, str(Path(__file__).parent))
+# Получаем путь к проекту
+PROJECT_DIR = Path.cwd()
+
+# Добавляем путь для импорта версии
+sys.path.insert(0, str(PROJECT_DIR))
 from chronojudge.version import VERSION
 
 APP_NAME = f"ChronoJudge_v{VERSION}"
@@ -13,10 +16,9 @@ block_cipher = None
 
 a = Analysis(
     ['main.py'],
-    pathex=[str(Path(__file__).parent)],
+    pathex=[str(PROJECT_DIR)],
     binaries=[],
     datas=[
-        ('chronojudge/assets/icon.ico', 'assets'),
         ('version.txt', '.'),
     ],
     hiddenimports=[
@@ -57,15 +59,15 @@ exe = EXE(
     name=APP_NAME,
     debug=False,
     bootloader_ignore_signals=False,
-    strip=True,
-    upx=True,
+    strip=False,        # strip недоступен в окружении
+    upx=False,          # upx недоступен в окружении
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False,
+    console=False,      # окно без консоли (GUI)
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='chronojudge/assets/icon.ico',
+    # icon не указываем - используем стандартную
 )

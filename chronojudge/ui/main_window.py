@@ -1,13 +1,14 @@
 """Главное окно приложения."""
 
 import sys
-from datetime import timedelta
+from datetime import date, timedelta
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QTimer, Slot
 from PySide6.QtGui import QAction, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QApplication,
+    QDateEdit,
     QFileDialog,
     QGridLayout,
     QGroupBox,
@@ -22,9 +23,11 @@ from PySide6.QtWidgets import (
 
 from chronojudge import get_app_title, get_version
 from chronojudge.core import (
+    AgeCategory,
     AppTimer,
     CompetitionState,
     FinishRecord,
+    Gender,
     Participant,
     TimerState,
     calculate_all_results,
@@ -32,7 +35,7 @@ from chronojudge.core import (
     get_participant_by_number,
     validate_manual_time,
 )
-from chronojudge.io import ExcelImporter, Exporter, StateManager
+from chronojudge.io import ExcelImporter, Exporter, StateManager, CategoriesImporter
 from chronojudge.services import Logger, SessionManager
 from chronojudge.ui.status_bar import StatusBar
 from chronojudge.ui.widgets import ManualTimeLineEdit, NumberLineEdit, ResultsTable
@@ -46,14 +49,15 @@ class MainWindow(QMainWindow):
 
         # Версия в заголовке
         self.setWindowTitle(get_app_title())
-        self.resize(1100, 750)
-        self.setMinimumSize(900, 600)
+        self.resize(1200, 800)
+        self.setMinimumSize(1000, 650)
 
         # Сервисы
         self.logger = Logger()
         self.session = SessionManager(self.logger)
         self.state_manager = StateManager(self.logger)
         self.excel_importer = ExcelImporter(self.logger)
+        self.categories_importer = CategoriesImporter(self.logger)
         self.exporter = Exporter(self.logger)
 
         # Данные
@@ -61,6 +65,9 @@ class MainWindow(QMainWindow):
         self.finishes: list[FinishRecord] = []
         self.common_start: timedelta | None = None
         self.registration_file: str = ""
+        self.categories_file: str = ""
+        self.categories: list[AgeCategory] = []
+        self.competition_date: date = date.today()
 
         # Таймер
         self.timer = AppTimer(self)
@@ -92,7 +99,37 @@ class MainWindow(QMainWindow):
         main_layout.setSpacing(10)
         main_layout.setContentsMargins(15, 15, 15, 10)
 
-        # === ВЕРХНЯЯ ЧАСТЬ: ТАЙМЕР ===
+        # === ВЕРХНЯЯ ЧАСТЬ: ТАЙМЕР И НАСТРОЙКИ СОРЕВНОВАНИЙ ===
+        top_group = QGroupBox("Параметры соревнований")
+        top_layout = QHBoxLayout(top_group)
+        top_layout.setContentsMargins(15, 15, 15, 15)
+        top_layout.setSpacing(20)
+
+        # Дата соревнований
+        top_layout.addWidget(QLabel("Дата соревнований:"))
+        self.competition_date_edit = QDateEdit()
+        self.competition_date_edit.setCalendarPopup(True)
+        self.competition_date_edit.setDate(self.competition_date)
+        self.competition_date_edit.setDisplayFormat("dd.MM.yyyy")
+        self.competition_date_edit.setFixedWidth(150)
+        self.competition_date_edit.dateChanged.connect(self._on_competition_date_changed)
+        top_layout.addWidget(self.competition_date_edit)
+
+        # Файл категорий
+        top_layout.addWidget(QLabel("Категории:"))
+        self.categories_file_label = QLabel("не загружен")
+        self.categories_file_label.setStyleSheet("color: #666; font-size: 12px;")
+        self.categories_file_label.setMinimumWidth(200)
+        top_layout.addWidget(self.categories_file_label, 1)
+
+        self.btn_load_categories = QPushButton("Загрузить категории")
+        self.btn_load_categories.setFixedWidth(160)
+        self.btn_load_categories.clicked.connect(self._on_load_categories)
+        top_layout.addWidget(self.btn_load_categories)
+
+        main_layout.addWidget(top_group)
+
+        # === ТАЙМЕР ===
         timer_group = QGroupBox("Хронометраж")
         timer_layout = QHBoxLayout(timer_group)
         timer_layout.setContentsMargins(15, 15, 15, 15)
@@ -210,7 +247,7 @@ class MainWindow(QMainWindow):
         self.btn_finish.setEnabled(False)
         input_layout.addWidget(self.btn_finish, 0, 4, alignment=Qt.AlignmentFlag.AlignVCenter)
 
-        # Статус загруженного файла
+        # Статус загруженных файлов
         self.reg_file_label = QLabel("Файл регистрации: не загружен")
         self.reg_file_label.setStyleSheet("color: #666; font-size: 12px;")
         input_layout.addWidget(self.reg_file_label, 1, 0, 1, 5)
@@ -231,7 +268,7 @@ class MainWindow(QMainWindow):
         self._update_finish_button()
 
     def _setup_shortcuts(self) -> None:
-        # Space - START/STOP
+        # Space - START
         shortcut_space = QShortcut(QKeySequence(Qt.Key.Key_Space), self)
         shortcut_space.activated.connect(self._on_space)
 
@@ -256,6 +293,12 @@ class MainWindow(QMainWindow):
         act_load = QAction("Загрузить регистрацию (Ctrl+O)", self)
         act_load.triggered.connect(self._on_load_registration)
         file_menu.addAction(act_load)
+
+        act_load_cat = QAction("Загрузить категории...", self)
+        act_load_cat.triggered.connect(self._on_load_categories)
+        file_menu.addAction(act_load_cat)
+
+        file_menu.addSeparator()
 
         act_export = QAction("Экспорт отчёта (Ctrl+S)", self)
         act_export.triggered.connect(self._on_export_report)
@@ -303,6 +346,43 @@ class MainWindow(QMainWindow):
         has_reg = len(self.participants) > 0
         has_number = self.number_edit.get_number() is not None
         self.btn_finish.setEnabled(has_reg and has_number)
+
+    @Slot()
+    def _on_competition_date_changed(self, qdate) -> None:
+        """Изменение даты соревнований."""
+        self.competition_date = qdate.toPython()
+        self._refresh_table()  # Пересчитываем категории в таблице
+        self._autosave()
+        self.status_bar.show_info(f"Дата соревнований: {self.competition_date.strftime('%d.%m.%Y')}")
+
+    @Slot()
+    def _on_load_categories(self) -> None:
+        """Загрузка файла категорий."""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Открыть файл категорий", "",
+            "Excel файлы (*.xlsx *.xls);;Все файлы (*.*)"
+        )
+        if not file_path:
+            return
+
+        try:
+            categories = self.categories_importer.load(file_path)
+            self.categories = categories
+            self.categories_file = file_path
+
+            self.categories_file_label.setText(f"{Path(file_path).name} ({len(categories)} кат.)")
+            self.categories_file_label.setStyleSheet("color: #27ae60; font-size: 12px;")
+
+            self.status_bar.set_permanent(f"Категорий: {len(categories)}")
+            self.status_bar.show_info("Файл категорий загружен")
+
+            # Обновляем таблицу с новыми категориями
+            self._refresh_table()
+            self._autosave()
+
+        except Exception as e:
+            self.logger.log("ERROR", f"Ошибка загрузки категорий: {e}")
+            self.status_bar.show_error(f"Ошибка загрузки категорий: {e}")
 
     @Slot()
     def _on_start(self) -> None:
@@ -466,8 +546,14 @@ class MainWindow(QMainWindow):
             # Пересчитываем перед экспортом
             sorted_finishes = calculate_all_results(self.finishes, self.common_start)
 
-            excel_path = self.exporter.export_excel(sorted_finishes, dir_path, self.registration_file)
-            csv_path = self.exporter.export_csv(sorted_finishes, dir_path)
+            excel_path = self.exporter.export_excel(
+                sorted_finishes, dir_path, self.registration_file,
+                self.competition_date, self.categories
+            )
+            csv_path = self.exporter.export_csv(
+                sorted_finishes, dir_path,
+                self.competition_date, self.categories
+            )
 
             self.status_bar.show_info(f"Отчёт сохранён: {Path(excel_path).name}, {Path(csv_path).name}")
 
@@ -485,7 +571,10 @@ class MainWindow(QMainWindow):
             # Показываем в обратном хронологическом порядке (свежие сверху)
             for record in reversed(self.finishes):
                 display_place = place_by_id.get(id(record), 0)
-                self.results_table.add_result(record, display_place)
+                self.results_table.add_result(
+                    record, display_place,
+                    self.competition_date, self.categories
+                )
         finally:
             self.results_table.blockSignals(False)
 

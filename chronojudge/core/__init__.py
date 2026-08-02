@@ -8,22 +8,28 @@ from .calculator import (
     validate_number_input,
 )
 from .models import (
+    AgeCategory,
     CompetitionState,
     FinishRecord,
+    Gender,
     Participant,
     format_time,
     format_time_short,
+    parse_date,
     parse_time_offset,
     parse_time_str,
 )
 from .timer import AppTimer, TimerState
 
 __all__ = [
-    "Participant",
-    "FinishRecord",
+    "AgeCategory",
     "CompetitionState",
+    "FinishRecord",
+    "Gender",
+    "Participant",
     "parse_time_str",
     "parse_time_offset",
+    "parse_date",
     "format_time",
     "format_time_short",
     "AppTimer",
