@@ -30,6 +30,7 @@ class FinishRecord:
     penalty_points: int = 0        # штрафные баллы (поле для будущего расчёта)
     place: int = 0                 # место в отчёте (вычисляется при экспорте)
     final_time: timedelta | None = None   # итоговое время (вычисляется)
+    sequence: int = 0              # порядок нажатия Finish! (1, 2, 3...)
 
     # Метаданные
     created_at: str = ""           # ISO timestamp

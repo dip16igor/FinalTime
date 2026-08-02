@@ -82,6 +82,9 @@ class MainWindow(QMainWindow):
         self._autosave_timer.timeout.connect(self._autosave)
         self._autosave_timer.start()
 
+        # Счётчик порядка финишей
+        self._finish_sequence = 0
+
     def _setup_ui(self) -> None:
         central = QWidget()
         self.setCentralWidget(central)
@@ -340,24 +343,22 @@ class MainWindow(QMainWindow):
         # Ручное время (опционально)
         manual_time = self.manual_time_edit.get_time()
 
-        # Создаём запись
+        # Создаём запись с порядковым номером
+        self._finish_sequence += 1
         record = FinishRecord(
             participant=participant,
             timer_time=self.timer.elapsed,
             manual_time=manual_time,
+            sequence=self._finish_sequence,
         )
 
         # Вычисляем итоговое время
         record.final_time = calculate_all_results([record], self.common_start)[0].final_time
 
-        # Добавляем в список
+        # Добавляем в список (хронологический порядок)
         self.finishes.append(record)
 
-        # Пересчитываем все места
-        sorted_finishes = calculate_all_results(self.finishes, self.common_start)
-        self.finishes = sorted_finishes
-
-        # Обновляем таблицу
+        # Обновляем таблицу (показываем свежие сверху)
         self._refresh_table()
 
         # Очищаем ввод
@@ -411,9 +412,7 @@ class MainWindow(QMainWindow):
                 record.penalty_points = int(new_value) if new_value else 0
                 record.is_edited = True
 
-            # Пересчёт
-            sorted_finishes = calculate_all_results(self.finishes, self.common_start)
-            self.finishes = sorted_finishes
+            # Обновляем таблицу (места пересчитаются в _refresh_table)
             self._refresh_table()
 
         except ValueError as e:
@@ -480,8 +479,13 @@ class MainWindow(QMainWindow):
         self.results_table.blockSignals(True)
         try:
             self.results_table.setRowCount(0)
-            for record in self.finishes:
-                self.results_table.add_result(record, record.place)
+            # Считаем места по времени (для отображения в колонке Место)
+            sorted_by_time = calculate_all_results(self.finishes, self.common_start)
+            place_by_id = {id(r): r.place for r in sorted_by_time}
+            # Показываем в обратном хронологическом порядке (свежие сверху)
+            for record in reversed(self.finishes):
+                display_place = place_by_id.get(id(record), 0)
+                self.results_table.add_result(record, display_place)
         finally:
             self.results_table.blockSignals(False)
 
