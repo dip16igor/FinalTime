@@ -21,8 +21,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from chronojudge import get_app_title, get_version
-from chronojudge.core import (
+from finaltime import get_app_title, get_version
+from finaltime.core import (
     AgeCategory,
     AppTimer,
     CompetitionState,
@@ -35,14 +35,14 @@ from chronojudge.core import (
     get_participant_by_number,
     validate_manual_time,
 )
-from chronojudge.io import ExcelImporter, Exporter, StateManager, CategoriesImporter
-from chronojudge.services import Logger, SessionManager
-from chronojudge.ui.status_bar import StatusBar
-from chronojudge.ui.widgets import ManualTimeLineEdit, NumberLineEdit, ResultsTable
+from finaltime.io import ExcelImporter, Exporter, StateManager, CategoriesImporter
+from finaltime.services import Logger, SessionManager
+from finaltime.ui.status_bar import StatusBar
+from finaltime.ui.widgets import ManualTimeLineEdit, NumberLineEdit, ResultsTable
 
 
 class MainWindow(QMainWindow):
-    """Главное окно приложения ChronoJudge."""
+    """Главное окно приложения FinalTime."""
 
     def __init__(self):
         super().__init__()
@@ -627,7 +627,7 @@ class MainWindow(QMainWindow):
             "Судейский хронометраж и учет результатов<br><br>"
             f"Версия: {get_version()}<br>"
             "Python + PySide6 + openpyxl<br>"
-            "© 2024 ChronoJudge Team"
+            "© 2024 FinalTime Team"
         )
 
     def closeEvent(self, event) -> None:
@@ -640,7 +640,7 @@ class MainWindow(QMainWindow):
 def main() -> int:
     """Точка входа приложения."""
     app = QApplication(sys.argv)
-    app.setApplicationName("ChronoJudge")
+    app.setApplicationName("FinalTime")
     app.setApplicationVersion(get_version())
 
     window = MainWindow()

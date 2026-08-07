@@ -1,4 +1,4 @@
-# ChronoJudge — Судейский хронометраж
+# FinalTime — Судейский хронометраж
 
 Приложение для судей на соревнованиях: фиксация старта, финиша, ручного времени, штрафов и формирование отчётов.
 
@@ -42,12 +42,12 @@ python main.py
 uv pip install -e ".[build]"
 
 # Сборка
-pyinstaller --clean chronojudge.spec
+pyinstaller --clean finaltime.spec
 # или
-python -m PyInstaller --clean --onefile --windowed --name "ChronoJudge_v1.0.0" --icon chronojudge/assets/icon.ico main.py
+python -m PyInstaller --clean --onefile --windowed --name "FinalTime_v1.2.0" finaltime/assets/icon.ico main.py
 ```
 
-Готовый `ChronoJudge_v1.0.0.exe` будет в папке `dist/`.
+Готовый `FinalTime_v1.2.0.exe` будет в папке `dist/`.
 
 ## Использование
 
@@ -55,7 +55,7 @@ python -m PyInstaller --clean --onefile --windowed --name "ChronoJudge_v1.0.0" -
 2. **Запустите таймер** — кнопка `START` или `Space`
 3. **На финише** — введите номер участника, при необходимости ручное время судьи, нажмите `Finish!` или `Enter`
 4. **Просмотр/правка** — таблица результатов ниже, двойной клик по ячейке для редактирования
-5. **Отчёт** — `Файл → Экспорт отчёта (Ctrl+S)` — выберите папку, получите `Report_ChronoJudge_v1.0.0.xlsx` и `.csv`
+5. **Отчёт** — `Файл → Экспорт отчёта (Ctrl+S)` — выберите папку, получите `Report_FinalTime_v1.2.0.xlsx` и `.csv`
 
 ## Горячие клавиши
 
@@ -83,21 +83,20 @@ python -m PyInstaller --clean --onefile --windowed --name "ChronoJudge_v1.0.0" -
 ## Структура проекта
 
 ```
-chronojudge/
+finaltime/
 ├── core/           # Модели, таймер, калькулятор
 ├── ui/             # Главное окно, виджеты, статус-бар
 ├── io/             # Импорт Excel, экспорт Excel/CSV, сохранение состояния
 ├── services/       # Логирование, управление сессией
-├── assets/         # Иконки
 └── version.py      # Версия из version.txt
 ```
 
 ## Версионирование
 
 - Версия в `version.txt` (SemVer: MAJOR.MINOR.PATCH)
-- Отображается в заголовке окна: `ChronoJudge v1.0.0`
-- В имени exe: `ChronoJudge_v1.0.0.exe`
-- Git-теги: `v1.0.0`
+- Отображается в заголовке окна: `FinalTime v1.2.0`
+- В имени exe: `FinalTime_v1.2.0.exe`
+- Git-теги: `v1.2.0`
 - История изменений: `CHANGELOG.md`
 
 ## Требования

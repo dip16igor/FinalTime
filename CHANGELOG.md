@@ -5,6 +5,16 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.0.0/),
 и проект следует [Semantic Versioning](https://semver.org/lang/ru/).
 
+## [1.3.0] - 2025-08-07
+
+### Изменено
+- **Переименование приложения**: `ChronoJudge` → `FinalTime`.
+- Пакет переименован: `chronojudge/` → `finaltime/`.
+- Все внутренние импорты обновлены.
+- Имя exe: `FinalTime_v1.3.0.exe`.
+- Папка данных: `%APPDATA%/FinalTime/`.
+- Файлы отчётов: `Report_FinalTime_v1.3.0.xlsx/csv`.
+
 ## [1.2.0] - 2024-12-19
 
 ### Добавлено

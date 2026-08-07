@@ -5,7 +5,7 @@ from pathlib import Path
 
 import openpyxl
 
-from chronojudge.core import Participant, parse_time_offset, parse_date, Gender
+from finaltime.core import Participant, parse_time_offset, parse_date, Gender
 
 
 class ExcelImporter:

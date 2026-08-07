@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from chronojudge.services.logger import Logger
+from finaltime.services.logger import Logger
 
 
 class SessionManager:

@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
     QTableWidgetItem,
 )
 
-from chronojudge.core import AgeCategory, format_time_short
+from finaltime.core import AgeCategory, format_time_short
 
 
 class NumberLineEdit(QLineEdit):

@@ -8,8 +8,8 @@ import openpyxl
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
-from chronojudge import get_version
-from chronojudge.core import AgeCategory, FinishRecord, format_time_short
+from finaltime import get_version
+from finaltime.core import AgeCategory, FinishRecord, format_time_short
 
 
 class Exporter:
@@ -62,7 +62,7 @@ class Exporter:
         ws.row_dimensions[1].height = 35
 
         ws.merge_cells('A2:I2')
-        ws['A2'] = f"Сгенерировано ChronoJudge v{get_version()}"
+        ws['A2'] = f"Сгенерировано FinalTime v{get_version()}"
         ws['A2'].font = subtitle_font
         ws['A2'].alignment = Alignment(horizontal='center')
 
@@ -158,7 +158,7 @@ class Exporter:
         ws.auto_filter.ref = f'A{header_row}:{last_col}{header_row + len(finishes)}'
 
         # Сохранение
-        output_path = Path(output_dir) / f"Report_ChronoJudge_v{get_version()}.xlsx"
+        output_path = Path(output_dir) / f"Report_FinalTime_v{get_version()}.xlsx"
         wb.save(output_path)
 
         self.logger.log("INFO", f"Excel report saved: {output_path}")
@@ -172,7 +172,7 @@ class Exporter:
         categories: list[AgeCategory] | None = None
     ) -> str:
         """Export to CSV."""
-        output_path = Path(output_dir) / f"Report_ChronoJudge_v{get_version()}.csv"
+        output_path = Path(output_dir) / f"Report_FinalTime_v{get_version()}.csv"
 
         with open(output_path, 'w', newline='', encoding='utf-8-sig') as f:
             writer = csv.writer(f, delimiter=';')

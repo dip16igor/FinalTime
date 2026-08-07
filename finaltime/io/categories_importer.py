@@ -5,7 +5,7 @@ from typing import Optional
 
 import openpyxl
 
-from chronojudge.core import AgeCategory, Gender, parse_date
+from finaltime.core import AgeCategory, Gender, parse_date
 
 
 class CategoriesImporter:

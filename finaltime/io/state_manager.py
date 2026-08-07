@@ -4,7 +4,7 @@ import json
 import os
 from pathlib import Path
 
-from chronojudge.core import (
+from finaltime.core import (
     CompetitionState,
     FinishRecord,
     Participant,
@@ -23,11 +23,11 @@ class StateManager:
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
     def _get_data_dir(self) -> Path:
-        """Папка для данных: %APPDATA%/ChronoJudge/ или ./data/"""
+        """Папка для данных: %APPDATA%/FinalTime/ или ./data/"""
         if os.name == 'nt':
             appdata = os.environ.get('APPDATA')
             if appdata:
-                return Path(appdata) / "ChronoJudge"
+                return Path(appdata) / "FinalTime"
         return Path.cwd() / "data"
 
     def save(self, state: CompetitionState) -> None:

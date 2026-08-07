@@ -1,10 +1,10 @@
-"""ChronoJudge - Судейский хронометраж и учет результатов."""
+"""FinalTime - Судейский хронометраж и учет результатов."""
 
 from . import version
 
 __version__ = version.VERSION
-__app_name__ = "ChronoJudge"
-__author__ = "ChronoJudge Team"
+__app_name__ = "FinalTime"
+__author__ = "FinalTime Team"
 
 def get_version() -> str:
     """Возвращает версию приложения."""

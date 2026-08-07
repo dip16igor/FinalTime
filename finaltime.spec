@@ -8,9 +8,9 @@ PROJECT_DIR = Path.cwd()
 
 # Добавляем путь для импорта версии
 sys.path.insert(0, str(PROJECT_DIR))
-from chronojudge.version import VERSION
+from finaltime.version import VERSION
 
-APP_NAME = f"ChronoJudge_v{VERSION}"
+APP_NAME = f"FinalTime_v{VERSION}"
 
 block_cipher = None
 
@@ -59,15 +59,14 @@ exe = EXE(
     name=APP_NAME,
     debug=False,
     bootloader_ignore_signals=False,
-    strip=False,        # strip недоступен в окружении
-    upx=False,          # upx недоступен в окружении
+    strip=False,
+    upx=False,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False,      # окно без консоли (GUI)
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    # icon не указываем - используем стандартную
 )

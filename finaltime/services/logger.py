@@ -8,7 +8,7 @@ from pathlib import Path
 class Logger:
     """Логгер с записью в файл и передачей в статус-бар."""
 
-    def __init__(self, name: str = "ChronoJudge"):
+    def __init__(self, name: str = "FinalTime"):
         self.logger = logging.getLogger(name)
         self.logger.setLevel(logging.DEBUG)
 
@@ -20,12 +20,12 @@ class Logger:
         # Папка для логов
         if os.name == 'nt':
             appdata = os.environ.get('APPDATA')
-            log_dir = Path(appdata) / "ChronoJudge" / "logs" if appdata else Path.cwd() / "data" / "logs"
+            log_dir = Path(appdata) / "FinalTime" / "logs" if appdata else Path.cwd() / "data" / "logs"
         else:
             log_dir = Path.cwd() / "data" / "logs"
 
         log_dir.mkdir(parents=True, exist_ok=True)
-        log_file = log_dir / "chronojudge.log"
+        log_file = log_dir / "finaltime.log"
 
         # Файловый хендлер с ротацией (простая - перезапись при запуске)
         file_handler = logging.FileHandler(log_file, mode='a', encoding='utf-8')
