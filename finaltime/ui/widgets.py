@@ -3,7 +3,7 @@
 from datetime import date, timedelta
 
 from PySide6.QtCore import QRegularExpression, Qt, QTimer, Signal
-from PySide6.QtGui import QColor, QKeyEvent, QPainter, QPainterPath, QPen, QRegularExpressionValidator
+from PySide6.QtGui import QColor, QKeyEvent, QPainter, QPainterPath, QPen, QPolygonF, QRegularExpressionValidator
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QHeaderView,
@@ -111,15 +111,23 @@ class HoldButton(QPushButton):
         path = QPainterPath()
         path.addRoundedRect(rect, self.RING_RADIUS, self.RING_RADIUS)
 
+        # Рисуем линию по периметру, уменьшающуюся при удержании.
+        # Используем pointAtPercent + polyline, т.к. dash-паттерн Qt
+        # не уменьшает линию плавно на QPainterPath.
+        total_len = path.length()
+        target_len = total_len * self._progress
+        end_t = path.percentAtLength(target_len)
+        steps = max(int(target_len), 1)
+
+        poly = QPolygonF()
+        for i in range(steps + 1):
+            t = end_t * i / steps
+            poly.append(path.pointAtPercent(t))
+
         pen = QPen(self._ring_color, self.RING_WIDTH)
         pen.setCapStyle(Qt.PenCapStyle.RoundCap)
-
-        total_len = path.length()
-        progress_len = max(total_len * self._progress, 0.0)
-        pen.setDashPattern([progress_len, total_len - progress_len + 0.1])
-
         painter.setPen(pen)
-        painter.drawPath(path)
+        painter.drawPolyline(poly)
         painter.end()
 
 
