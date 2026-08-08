@@ -34,6 +34,7 @@ class StateManager:
         """Сохранить состояние в JSON."""
         try:
             data = {
+                "competition_name": state.competition_name,
                 "registration_file": state.registration_file,
                 "categories_file": state.categories_file,
                 "competition_date": state.competition_date,
@@ -136,6 +137,7 @@ class StateManager:
                 common_start = parse_time_str(data["common_start_offset"])
 
             state = CompetitionState(
+                competition_name=data.get("competition_name", ""),
                 registration_file=data.get("registration_file", ""),
                 categories_file=data.get("categories_file", ""),
                 competition_date=data.get("competition_date", ""),

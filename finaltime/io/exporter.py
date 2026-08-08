@@ -24,7 +24,8 @@ class Exporter:
         output_dir: str,
         registration_file: str = "",
         competition_date: date | None = None,
-        categories: list[AgeCategory] | None = None
+        categories: list[AgeCategory] | None = None,
+        competition_name: str = "",
     ) -> str:
         """Экспорт в красивый Excel-файл."""
         wb = openpyxl.Workbook()
@@ -56,7 +57,10 @@ class Exporter:
 
         # === ЗАГОЛОВОК ОТЧЁТА ===
         ws.merge_cells('A1:I1')
-        ws['A1'] = "ПРОТОКОЛ РЕЗУЛЬТАТОВ СОРЕВНОВАНИЙ"
+        if competition_name.strip():
+            ws['A1'] = competition_name.strip().upper()
+        else:
+            ws['A1'] = "ПРОТОКОЛ РЕЗУЛЬТАТОВ СОРЕВНОВАНИЙ"
         ws['A1'].font = title_font
         ws['A1'].alignment = Alignment(horizontal='center', vertical='center')
         ws.row_dimensions[1].height = 35
@@ -158,21 +162,33 @@ class Exporter:
         ws.auto_filter.ref = f'A{header_row}:{last_col}{header_row + len(finishes)}'
 
         # Сохранение
-        output_path = Path(output_dir) / f"Report_FinalTime_v{get_version()}.xlsx"
+        output_path = Path(output_dir) / self._build_report_filename(competition_name, "xlsx")
         wb.save(output_path)
 
         self.logger.log("INFO", f"Excel report saved: {output_path}")
         return str(output_path)
+
+    def _build_report_filename(self, competition_name: str, ext: str) -> str:
+        """Формирует имя файла отчёта с названием соревнований."""
+        name = competition_name.strip()
+        if not name:
+            name = "FinalTime"
+        # Заменяем недопустимые символы и пробелы
+        import re
+        name = re.sub(r'[\\/:*?"<>|]', '_', name)
+        name = re.sub(r'\s+', '_', name).strip('_')
+        return f"Report_{name}_v{get_version()}.{ext}"
 
     def export_csv(
         self,
         finishes: list[FinishRecord],
         output_dir: str,
         competition_date: date | None = None,
-        categories: list[AgeCategory] | None = None
+        categories: list[AgeCategory] | None = None,
+        competition_name: str = "",
     ) -> str:
         """Export to CSV."""
-        output_path = Path(output_dir) / f"Report_FinalTime_v{get_version()}.csv"
+        output_path = Path(output_dir) / self._build_report_filename(competition_name, "csv")
 
         with open(output_path, 'w', newline='', encoding='utf-8-sig') as f:
             writer = csv.writer(f, delimiter=';')

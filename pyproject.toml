@@ -1,6 +1,6 @@
 [project]
 name = "finaltime"
-version = "1.4.0"
+version = "1.5.0"
 description = "Судейский хронометраж и учет результатов соревнований"
 readme = "README.md"
 requires-python = ">=3.12"

@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
     QGroupBox,
     QHBoxLayout,
     QLabel,
+    QLineEdit,
     QMainWindow,
     QMessageBox,
     QPushButton,
@@ -69,6 +70,7 @@ class MainWindow(QMainWindow):
         self.exporter = Exporter(self.logger)
 
         # Данные
+        self.competition_name: str = ""
         self.participants: list[Participant] = []
         self.finishes: list[FinishRecord] = []
         self.common_start: timedelta | None = None
@@ -107,57 +109,70 @@ class MainWindow(QMainWindow):
         main_layout.setSpacing(10)
         main_layout.setContentsMargins(15, 15, 15, 10)
 
-        # === ВЕРХНЯЯ ЧАСТЬ: НАСТРОЙКИ СОРЕВНОВАНИЙ ===
+        # === ВЕРХНЯЯ ЧАСТЬ: ПАРАМЕТРЫ СОРЕВНОВАНИЙ ===
         top_group = QGroupBox("Параметры соревнований")
         top_layout = QVBoxLayout(top_group)
         top_layout.setContentsMargins(15, 15, 15, 15)
         top_layout.setSpacing(10)
 
-        # Ряд 1: Дата соревнований + Файл регистрации
+        # Ряд 1: Название соревнований
         row1 = QHBoxLayout()
         row1.setSpacing(15)
 
-        row1.addWidget(QLabel("Дата соревнований:"))
+        row1.addWidget(QLabel("Название соревнований:"))
+        self.competition_name_edit = QLineEdit()
+        self.competition_name_edit.setPlaceholderText("например, Чемпионат города по лёгкой атлетике")
+        self.competition_name_edit.setMinimumWidth(300)
+        self.competition_name_edit.textChanged.connect(self._on_competition_name_changed)
+        row1.addWidget(self.competition_name_edit, 1)
+
+        top_layout.addLayout(row1)
+
+        # Ряд 2: Дата соревнований + Файл регистрации
+        row2 = QHBoxLayout()
+        row2.setSpacing(15)
+
+        row2.addWidget(QLabel("Дата соревнований:"))
         self.competition_date_edit = QDateEdit()
         self.competition_date_edit.setCalendarPopup(True)
         self.competition_date_edit.setDate(self.competition_date)
         self.competition_date_edit.setDisplayFormat("dd.MM.yyyy")
         self.competition_date_edit.setFixedWidth(130)
         self.competition_date_edit.dateChanged.connect(self._on_competition_date_changed)
-        row1.addWidget(self.competition_date_edit)
+        row2.addWidget(self.competition_date_edit)
 
-        row1.addSpacing(20)
+        row2.addSpacing(20)
 
         # Файл регистрации
-        row1.addWidget(QLabel("Регистрация:"))
+        row2.addWidget(QLabel("Регистрация:"))
         self.registration_file_label = QLabel("не загружен")
         self.registration_file_label.setStyleSheet("color: #666; font-size: 12px;")
         self.registration_file_label.setMinimumWidth(220)
-        row1.addWidget(self.registration_file_label, 1)
+        row2.addWidget(self.registration_file_label, 1)
 
         self.btn_load_registration = QPushButton("Загрузить регистрацию")
         self.btn_load_registration.setFixedWidth(170)
         self.btn_load_registration.clicked.connect(self._on_load_registration)
-        row1.addWidget(self.btn_load_registration)
+        row2.addWidget(self.btn_load_registration)
 
-        top_layout.addLayout(row1)
+        top_layout.addLayout(row2)
 
-        # Ряд 2: Файл категорий
-        row2 = QHBoxLayout()
-        row2.setSpacing(15)
+        # Ряд 3: Файл категорий
+        row3 = QHBoxLayout()
+        row3.setSpacing(15)
 
-        row2.addWidget(QLabel("Категории:"))
+        row3.addWidget(QLabel("Категории:"))
         self.categories_file_label = QLabel("не загружен")
         self.categories_file_label.setStyleSheet("color: #666; font-size: 12px;")
         self.categories_file_label.setMinimumWidth(220)
-        row2.addWidget(self.categories_file_label, 1)
+        row3.addWidget(self.categories_file_label, 1)
 
         self.btn_load_categories = QPushButton("Загрузить категории")
         self.btn_load_categories.setFixedWidth(170)
         self.btn_load_categories.clicked.connect(self._on_load_categories)
-        row2.addWidget(self.btn_load_categories)
+        row3.addWidget(self.btn_load_categories)
 
-        top_layout.addLayout(row2)
+        top_layout.addLayout(row3)
 
         main_layout.addWidget(top_group)
 
@@ -393,6 +408,11 @@ class MainWindow(QMainWindow):
         self._autosave()
         self.status_bar.show_info(f"Дата соревнований: {self.competition_date.strftime('%d.%m.%Y')}")
 
+    def _on_competition_name_changed(self, text: str) -> None:
+        """Изменение названия соревнований."""
+        self.competition_name = text.strip()
+        self._autosave()
+
     @Slot()
     def _on_load_categories(self) -> None:
         """Загрузка файла категорий."""
@@ -458,6 +478,7 @@ class MainWindow(QMainWindow):
             return
 
         # Сброс данных
+        self.competition_name = ""
         self.participants = []
         self.finishes = []
         self.categories = []
@@ -475,6 +496,7 @@ class MainWindow(QMainWindow):
         self._update_finish_button()
 
         # Сброс UI
+        self.competition_name_edit.setText("")
         self.competition_date_edit.setDate(self.competition_date)
         self.reg_file_label.setText("Файл регистрации: не загружен")
         self.reg_file_label.setStyleSheet("color: #666; font-size: 12px;")
@@ -639,11 +661,11 @@ class MainWindow(QMainWindow):
 
             excel_path = self.exporter.export_excel(
                 sorted_finishes, dir_path, self.registration_file,
-                self.competition_date, self.categories
+                self.competition_date, self.categories, self.competition_name
             )
             csv_path = self.exporter.export_csv(
                 sorted_finishes, dir_path,
-                self.competition_date, self.categories
+                self.competition_date, self.categories, self.competition_name
             )
 
             self.status_bar.show_info(f"Отчёт сохранён: {Path(excel_path).name}, {Path(csv_path).name}")
@@ -671,6 +693,7 @@ class MainWindow(QMainWindow):
 
     def _autosave(self) -> None:
         state = CompetitionState(
+            competition_name=self.competition_name,
             registration_file=self.registration_file,
             categories_file=self.categories_file,
             competition_date=self.competition_date.isoformat(),
@@ -688,6 +711,10 @@ class MainWindow(QMainWindow):
         state = self.state_manager.load()
         if state is None:
             return
+
+        # Восстанавливаем название соревнований
+        self.competition_name = state.competition_name
+        self.competition_name_edit.setText(state.competition_name)
 
         # Восстанавливаем дату соревнования
         if state.competition_date:

@@ -121,6 +121,7 @@ class FinishRecord:
 @dataclass
 class CompetitionState:
     """Состояние соревнования (для сохранения/восстановления)."""
+    competition_name: str = ""
     registration_file: str = ""
     categories_file: str = ""
     competition_date: str = ""
