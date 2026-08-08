@@ -287,6 +287,7 @@ class ResultsTable(QTableWidget):
         ("Ручное время", 130, True),
         ("Штраф (с)", 100, True),
         ("Штраф (баллы)", 150, True),
+        ("Время старта", 110, False),
         ("Итоговое время", 145, False),
     ]
 
@@ -362,6 +363,11 @@ class ResultsTable(QTableWidget):
         manual_str = format_time_short(record.manual_time) if record.manual_time else ""
         final_str = format_time_short(record.final_time) if record.final_time else ""
 
+        # Время старта из файла регистрации (персональное смещение)
+        start_str = "-"
+        if record.participant.start_offset:
+            start_str = f"+{format_time_short(record.participant.start_offset)}"
+
         # Категория
         category_str = "-"
         if competition_date and categories and record.participant.date_of_birth:
@@ -376,6 +382,7 @@ class ResultsTable(QTableWidget):
             (manual_str, True),
             (str(record.penalty_seconds), True),
             (str(record.penalty_points), True),
+            (start_str, False),  # Время старта
             (final_str, False),
         ]
 
@@ -398,6 +405,11 @@ class ResultsTable(QTableWidget):
         manual_str = format_time_short(record.manual_time) if record.manual_time else ""
         final_str = format_time_short(record.final_time) if record.final_time else ""
 
+        # Время старта из файла регистрации (персональное смещение)
+        start_str = "-"
+        if record.participant.start_offset:
+            start_str = f"+{format_time_short(record.participant.start_offset)}"
+
         category_str = "-"
         if competition_date and categories and record.participant.date_of_birth:
             category_str = record.participant.category_label(competition_date, categories)
@@ -411,6 +423,7 @@ class ResultsTable(QTableWidget):
             manual_str,
             str(record.penalty_seconds),
             str(record.penalty_points),
+            start_str,
             final_str,
         ]
 
@@ -432,5 +445,6 @@ class ResultsTable(QTableWidget):
             "manual_time": self.item(row, 5).text() if self.item(row, 5) else "",
             "penalty_seconds": self.item(row, 6).text() if self.item(row, 6) else "0",
             "penalty_points": self.item(row, 7).text() if self.item(row, 7) else "0",
-            "final_time": self.item(row, 8).text() if self.item(row, 8) else "",
+            "start_time": self.item(row, 8).text() if self.item(row, 8) else "",
+            "final_time": self.item(row, 9).text() if self.item(row, 9) else "",
         }
