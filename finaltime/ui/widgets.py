@@ -3,7 +3,7 @@
 from datetime import date, timedelta
 
 from PySide6.QtCore import QElapsedTimer, QRegularExpression, Qt, QTimer, Signal
-from PySide6.QtGui import QColor, QKeyEvent, QPainter, QPainterPath, QPen, QPolygonF, QRegularExpressionValidator
+from PySide6.QtGui import QColor, QFont, QKeyEvent, QPainter, QPainterPath, QPen, QPolygonF, QRegularExpressionValidator
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QHeaderView,
@@ -258,13 +258,20 @@ class ManualTimeLineEdit(QLineEdit):
 
 
 class EditableTableWidgetItem(QTableWidgetItem):
-    """Ячейка таблицы, редактируемая по двойному клику."""
+    """Ячейка таблицы, редактируемая по двойному клику.
+
+    Редактируемые ячейки выделяются жирным шрифтом.
+    """
 
     def __init__(self, text: str = "", editable: bool = True):
         super().__init__(text)
         if not editable:
             # Используем базовые флаги без ItemIsEditable, чтобы избежать рекурсии self.flags()
             self.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
+        else:
+            font = QFont()
+            font.setBold(True)
+            self.setFont(font)
         self.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
 
 
