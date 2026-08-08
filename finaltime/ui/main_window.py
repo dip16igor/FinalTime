@@ -115,39 +115,39 @@ class MainWindow(QMainWindow):
         top_layout.setContentsMargins(15, 15, 15, 15)
         top_layout.setSpacing(10)
 
-        # Ряд 1: Название соревнований
+        # Ряд 1: Название соревнований + Дата
         row1 = QHBoxLayout()
         row1.setSpacing(15)
 
         row1.addWidget(QLabel("Название соревнований:"))
         self.competition_name_edit = QLineEdit()
         self.competition_name_edit.setPlaceholderText("например, Чемпионат города по лёгкой атлетике")
-        self.competition_name_edit.setMinimumWidth(300)
+        self.competition_name_edit.setMinimumWidth(250)
         self.competition_name_edit.textChanged.connect(self._on_competition_name_changed)
         row1.addWidget(self.competition_name_edit, 1)
 
-        top_layout.addLayout(row1)
+        row1.addSpacing(20)
 
-        # Ряд 2: Дата соревнований + Файл регистрации
-        row2 = QHBoxLayout()
-        row2.setSpacing(15)
-
-        row2.addWidget(QLabel("Дата соревнований:"))
+        row1.addWidget(QLabel("Дата соревнований:"))
         self.competition_date_edit = QDateEdit()
         self.competition_date_edit.setCalendarPopup(True)
         self.competition_date_edit.setDate(self.competition_date)
         self.competition_date_edit.setDisplayFormat("dd.MM.yyyy")
         self.competition_date_edit.setFixedWidth(130)
         self.competition_date_edit.dateChanged.connect(self._on_competition_date_changed)
-        row2.addWidget(self.competition_date_edit)
+        row1.addWidget(self.competition_date_edit)
 
-        row2.addSpacing(20)
+        top_layout.addLayout(row1)
 
-        # Файл регистрации
+        # Ряд 2: Регистрация + Категории с кнопками
+        row2 = QHBoxLayout()
+        row2.setSpacing(15)
+
+        # Регистрация
         row2.addWidget(QLabel("Регистрация:"))
         self.registration_file_label = QLabel("не загружен")
         self.registration_file_label.setStyleSheet("color: #666; font-size: 12px;")
-        self.registration_file_label.setMinimumWidth(220)
+        self.registration_file_label.setMinimumWidth(180)
         row2.addWidget(self.registration_file_label, 1)
 
         self.btn_load_registration = QPushButton("Загрузить регистрацию")
@@ -155,24 +155,21 @@ class MainWindow(QMainWindow):
         self.btn_load_registration.clicked.connect(self._on_load_registration)
         row2.addWidget(self.btn_load_registration)
 
-        top_layout.addLayout(row2)
+        row2.addSpacing(20)
 
-        # Ряд 3: Файл категорий
-        row3 = QHBoxLayout()
-        row3.setSpacing(15)
-
-        row3.addWidget(QLabel("Категории:"))
+        # Категории
+        row2.addWidget(QLabel("Категории:"))
         self.categories_file_label = QLabel("не загружен")
         self.categories_file_label.setStyleSheet("color: #666; font-size: 12px;")
-        self.categories_file_label.setMinimumWidth(220)
-        row3.addWidget(self.categories_file_label, 1)
+        self.categories_file_label.setMinimumWidth(180)
+        row2.addWidget(self.categories_file_label, 1)
 
         self.btn_load_categories = QPushButton("Загрузить категории")
         self.btn_load_categories.setFixedWidth(170)
         self.btn_load_categories.clicked.connect(self._on_load_categories)
-        row3.addWidget(self.btn_load_categories)
+        row2.addWidget(self.btn_load_categories)
 
-        top_layout.addLayout(row3)
+        top_layout.addLayout(row2)
 
         main_layout.addWidget(top_group)
 
