@@ -1,13 +1,15 @@
 """Главное окно приложения."""
 
+import base64
 import sys
 from datetime import date, timedelta
+from io import BytesIO
 from pathlib import Path
 
 import ctypes
 
 from PySide6.QtCore import Qt, QTimer, Slot
-from PySide6.QtGui import QAction, QIcon, QKeySequence, QShortcut
+from PySide6.QtGui import QAction, QBitmap, QIcon, QImage, QKeySequence, QPixmap, QShortcut
 from PySide6.QtWidgets import (
     QApplication,
     QDateEdit,
@@ -39,6 +41,7 @@ from finaltime.core import (
 )
 from finaltime.io import ExcelImporter, Exporter, StateManager, CategoriesImporter
 from finaltime.services import Logger, SessionManager
+from finaltime.assets.icon_data import ICON_ICO_B64
 from finaltime.ui.status_bar import StatusBar
 from finaltime.ui.widgets import ManualTimeLineEdit, NumberLineEdit, ResultsTable
 
@@ -55,9 +58,7 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(1000, 650)
 
         # Иконка окна
-        icon_path = _get_icon_path()
-        if icon_path.exists():
-            self.setWindowIcon(QIcon(str(icon_path)))
+        self.setWindowIcon(_load_icon())
 
         # Сервисы
         self.logger = Logger()
@@ -644,15 +645,12 @@ class MainWindow(QMainWindow):
         event.accept()
 
 
-def _get_icon_path() -> Path:
-    """Находит путь к icon.ico (обычный запуск или PyInstaller exe)."""
-    if getattr(sys, 'frozen', False):
-        # Запущено из PyInstaller exe
-        base = Path(sys._MEIPASS)
-    else:
-        # Обычный запуск из исходников
-        base = Path(__file__).parent.parent
-    return base / "assets" / "icon.ico"
+def _load_icon() -> QIcon:
+    """Загружает иконку из base64 данных."""
+    icon_data = base64.b64decode(ICON_ICO_B64)
+    pixmap = QPixmap()
+    pixmap.loadFromData(icon_data)
+    return QIcon(pixmap)
 
 
 def main() -> int:
@@ -670,9 +668,8 @@ def main() -> int:
     app.setApplicationVersion(get_version())
 
     # Установка иконки приложения (панель задач + заголовок окна)
-    icon_path = _get_icon_path()
-    icon = QIcon(str(icon_path))
-    app.setWindowIcon(icon)
+    app_icon = _load_icon()
+    app.setWindowIcon(app_icon)
 
     window = MainWindow()
     window.show()
