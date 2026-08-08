@@ -180,23 +180,59 @@ class MainWindow(QMainWindow):
         timer_layout.setContentsMargins(15, 15, 15, 15)
         timer_layout.setSpacing(20)
 
-        # Крупный таймер
-        self.timer_label = QLabel("00:00.0")
-        self.timer_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.timer_label.setStyleSheet("""
-            QLabel {
-                font-size: 56px;
-                font-family: 'Consolas', 'Monospace';
-                font-weight: bold;
-                color: #222;
+        # Крупный таймер с подписями HHH / MM / SS.S
+        timer_display = QWidget()
+        timer_display.setStyleSheet("""
+            QWidget {
                 background: #f5f5f5;
                 border: 3px solid #ddd;
                 border-radius: 8px;
-                padding: 10px 30px;
+                padding: 8px 20px;
             }
         """)
-        self.timer_label.setMinimumWidth(350)
-        timer_layout.addWidget(self.timer_label, 1)
+        timer_display_layout = QVBoxLayout(timer_display)
+        timer_display_layout.setContentsMargins(20, 10, 20, 12)
+        timer_display_layout.setSpacing(0)
+
+        # Строка подписей (HHH MM SS.S) над значениями
+        labels_row = QHBoxLayout()
+        labels_row.setSpacing(0)
+        unit_style = "font-size: 15px; font-weight: bold; color: #999; font-family: 'Consolas', 'Monospace';"
+        for text in ("HHH", ":", "MM", ":", "SS.S"):
+            lbl = QLabel(text)
+            lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            lbl.setStyleSheet(unit_style)
+            labels_row.addWidget(lbl, 1 if text not in (":",) else 0)
+        timer_display_layout.addLayout(labels_row)
+
+        # Строка значений HHH:MM:SS.S
+        values_row = QHBoxLayout()
+        values_row.setSpacing(0)
+        value_style = "font-size: 72px; font-family: 'Consolas', 'Monospace'; font-weight: bold; color: #222; background: transparent; border: none;"
+        self.timer_h_label = QLabel("000")
+        self.timer_h_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.timer_h_label.setStyleSheet(value_style)
+        self.timer_m_label = QLabel("00")
+        self.timer_m_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.timer_m_label.setStyleSheet(value_style)
+        self.timer_s_label = QLabel("00.0")
+        self.timer_s_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.timer_s_label.setStyleSheet(value_style)
+        colon_style = "font-size: 72px; font-family: 'Consolas', 'Monospace'; font-weight: bold; color: #222; background: transparent; border: none;"
+        colon1 = QLabel(":")
+        colon1.setStyleSheet(colon_style)
+        colon2 = QLabel(":")
+        colon2.setStyleSheet(colon_style)
+        values_row.addWidget(self.timer_h_label, 1)
+        values_row.addWidget(colon1, 0)
+        values_row.addWidget(self.timer_m_label, 1)
+        values_row.addWidget(colon2, 0)
+        values_row.addWidget(self.timer_s_label, 1)
+        timer_display_layout.addLayout(values_row)
+
+        self.timer_label = timer_display  # для совместимости (используется как контейнер)
+        timer_display.setMinimumWidth(420)
+        timer_layout.addWidget(timer_display, 1)
 
         # Кнопки управления таймером
         btn_layout = QVBoxLayout()
@@ -386,7 +422,13 @@ class MainWindow(QMainWindow):
     # === ОБРАБОТЧИКИ СОБЫТИЙ ===
 
     def _on_timer_tick(self, elapsed: timedelta) -> None:
-        self.timer_label.setText(format_time_short(elapsed))
+        total = elapsed.total_seconds()
+        hours = int(total // 3600)
+        minutes = int((total % 3600) // 60)
+        seconds = total % 60
+        self.timer_h_label.setText(f"{hours:03d}")
+        self.timer_m_label.setText(f"{minutes:02d}")
+        self.timer_s_label.setText(f"{seconds:04.1f}")
 
     def _update_timer_buttons(self, running: bool) -> None:
         self.btn_start.setEnabled(not running)
