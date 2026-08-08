@@ -8,7 +8,7 @@ from pathlib import Path
 
 import ctypes
 
-from PySide6.QtCore import Qt, QTimer, Slot
+from PySide6.QtCore import QEvent, Qt, QTimer, Slot
 from PySide6.QtGui import QAction, QBitmap, QIcon, QImage, QKeySequence, QPixmap, QShortcut
 from PySide6.QtWidgets import (
     QApplication,
@@ -90,6 +90,9 @@ class MainWindow(QMainWindow):
         self._setup_ui()
         self._setup_shortcuts()
         self._setup_menu()
+
+        # Клик мышью в области «Хронометраж» снимает фокус с полей ввода
+        QApplication.instance().installEventFilter(self)
 
         # Восстановление состояния
         self._restore_state()
@@ -179,9 +182,12 @@ class MainWindow(QMainWindow):
         timer_layout = QHBoxLayout(timer_group)
         timer_layout.setContentsMargins(15, 15, 15, 15)
         timer_layout.setSpacing(20)
+        self.timer_group = timer_group  # для фильтра кликов (снятие фокуса)
 
         # Крупный таймер с подписями HHH / MM / SS.S
         timer_display = QWidget()
+        # Клик в области таймера забирает фокус у полей ввода
+        timer_display.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         timer_display.setStyleSheet(
             "background: #f5f5f5; border-radius: 8px;"
         )
@@ -302,12 +308,14 @@ class MainWindow(QMainWindow):
         self.number_edit = NumberLineEdit()
         self.number_edit.setFixedWidth(150)
         self.number_edit.finish_requested.connect(self._on_finish)
+        self.number_edit.start_requested.connect(self._on_space)
         self.number_edit.textChanged.connect(self._update_finish_button)
         input_layout.addWidget(self.number_edit, 0, 1)
 
         # Ручное время
         input_layout.addWidget(QLabel("Ручное время:"), 0, 2)
         self.manual_time_edit = ManualTimeLineEdit()
+        self.manual_time_edit.start_requested.connect(self._on_space)
         self.manual_time_edit.setFixedWidth(220)
         self.manual_time_edit.finish_requested.connect(self._on_finish)
         input_layout.addWidget(self.manual_time_edit, 0, 3)
@@ -412,6 +420,31 @@ class MainWindow(QMainWindow):
         help_menu.addAction(act_about)
 
     # === ОБРАБОТЧИКИ СОБЫТИЙ ===
+
+    def eventFilter(self, obj, event) -> bool:
+        """Esc снимает фокус; клик в «Хронометраж» тоже снимает фокус."""
+        # Esc - снять фокус со всех текстовых полей
+        if event.type() == QEvent.Type.KeyPress and event.key() == Qt.Key.Key_Escape:
+            self._clear_focus()
+            return True
+
+        # Клик мышью в области «Хронометраж» снимает фокус с полей ввода
+        if event.type() == QEvent.Type.MouseButtonPress:
+            widget = obj if isinstance(obj, QWidget) else None
+            if widget is not None:
+                parent = widget
+                while parent is not None:
+                    if parent is self.timer_group:
+                        self._clear_focus()
+                        break
+                    parent = parent.parentWidget()
+        return super().eventFilter(obj, event)
+
+    def _clear_focus(self) -> None:
+        """Снимает фокус с текущего сфокусированного виджета (если есть)."""
+        focused = QApplication.focusWidget()
+        if focused is not None:
+            focused.clearFocus()
 
     def _on_timer_tick(self, elapsed: timedelta) -> None:
         total = elapsed.total_seconds()

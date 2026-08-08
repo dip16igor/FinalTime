@@ -150,6 +150,7 @@ class NumberLineEdit(QLineEdit):
     """Поле ввода только для цифр (номер участника)."""
 
     finish_requested = Signal()  # Enter нажат
+    start_requested = Signal()   # Пробел нажат (старт таймера)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -181,6 +182,14 @@ class NumberLineEdit(QLineEdit):
             # Tab делает это, Enter - только финиш
             self.setFocus()
             event.accept()
+        elif event.key() == Qt.Key.Key_Space:
+            # Пробел запускает таймер, а не вводит символ
+            self.start_requested.emit()
+            event.accept()
+        elif event.key() == Qt.Key.Key_Escape:
+            # Esc снимает фокус с поля
+            self.clearFocus()
+            event.accept()
         else:
             super().keyPressEvent(event)
 
@@ -205,6 +214,7 @@ class ManualTimeLineEdit(QLineEdit):
     """
 
     finish_requested = Signal()  # Enter нажат
+    start_requested = Signal()   # Пробел нажат (старт таймера)
 
     SAMPLE = "000:00:00.0"
     MAX_DIGITS = 8  # HHH(3) MM(2) SS(2) T(1)
@@ -236,6 +246,16 @@ class ManualTimeLineEdit(QLineEdit):
         key = event.key()
         if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             self.finish_requested.emit()
+            event.accept()
+            return
+        if key == Qt.Key.Key_Space:
+            # Пробел запускает таймер, а не вводит символ
+            self.start_requested.emit()
+            event.accept()
+            return
+        if key == Qt.Key.Key_Escape:
+            # Esc снимает фокус с поля
+            self.clearFocus()
             event.accept()
             return
         if key == Qt.Key.Key_Backspace:
