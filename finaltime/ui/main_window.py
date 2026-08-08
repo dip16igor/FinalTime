@@ -189,12 +189,16 @@ class MainWindow(QMainWindow):
         timer_display_layout.setContentsMargins(20, 8, 20, 10)
         timer_display_layout.setSpacing(0)
 
-        # Подписи над значениями (без рамок, без двоеточий)
+        # Подписи над значениями (без рамок, двоеточия невидимы для выравнивания)
         labels_row = QHBoxLayout()
         labels_row.setSpacing(2)
         unit_style = "font-size: 15px; font-weight: bold; color: #999; font-family: 'Consolas', 'Monospace'; background: transparent;"
         labels_row.addStretch(1)
-        for text in ("HHH", "MM", "SS.S"):
+        for i, text in enumerate(("HHH", "MM", "SS.S")):
+            if i > 0:
+                colon_spacer = QLabel(":")
+                colon_spacer.setStyleSheet("font-size: 15px; font-weight: bold; color: transparent; font-family: 'Consolas', 'Monospace';")
+                labels_row.addWidget(colon_spacer)
             lbl = QLabel(text)
             lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
             lbl.setStyleSheet(unit_style)
@@ -202,7 +206,7 @@ class MainWindow(QMainWindow):
         labels_row.addStretch(1)
         timer_display_layout.addLayout(labels_row)
 
-        # Значения HHH MM SS.S — плотно по центру, без двоеточий
+        # Значения HHH:MM:SS.S — плотно по центру, с двоеточиями
         values_row = QHBoxLayout()
         values_row.setSpacing(2)
         value_style = "font-size: 72px; font-family: 'Consolas', 'Monospace'; font-weight: bold; color: #222; background: transparent;"
@@ -217,7 +221,13 @@ class MainWindow(QMainWindow):
         self.timer_s_label.setStyleSheet(value_style)
         values_row.addStretch(1)
         values_row.addWidget(self.timer_h_label)
+        colon1 = QLabel(":")
+        colon1.setStyleSheet(value_style)
+        values_row.addWidget(colon1)
         values_row.addWidget(self.timer_m_label)
+        colon2 = QLabel(":")
+        colon2.setStyleSheet(value_style)
+        values_row.addWidget(colon2)
         values_row.addWidget(self.timer_s_label)
         values_row.addStretch(1)
         timer_display_layout.addLayout(values_row)
