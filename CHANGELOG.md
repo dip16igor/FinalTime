@@ -5,6 +5,11 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.0.0/),
 и проект следует [Semantic Versioning](https://semver.org/lang/ru/).
 
+## [1.7.6] - 2025-08-08
+
+### Исправлено
+- Устранено предупреждение `QAbstractItemView::commitData called with an editor that does not belong to this view` при редактировании ячеек таблицы: обновление таблицы теперь откладывается на следующий цикл событий (`QTimer.singleShot`), чтобы не уничтожать открытый редактор ячейки.
+
 ## [1.7.5] - 2025-08-08
 
 ### Исправлено

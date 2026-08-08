@@ -603,7 +603,13 @@ class MainWindow(QMainWindow):
         self.status_bar.show_info(f"Финиш записан: #{number} {participant.full_name}")
 
     def _on_table_cell_changed(self, row: int, col: int, new_value: str) -> None:
-        """Обработка ручного редактирования таблицы."""
+        """Обработка ручного редактирования таблицы.
+
+        Обновление таблицы откладывается на следующий цикл событий
+        (QTimer.singleShot), иначе пересоздание таблицы внутри обработки
+        commitData уничтожает открытый редактор ячейки и Qt выдаёт
+        «commitData called with an editor that does not belong to this view».
+        """
         if row >= len(self.finishes):
             return
 
@@ -618,7 +624,7 @@ class MainWindow(QMainWindow):
                     record.is_edited = True
                 else:
                     self.status_bar.show_error(f"Участник #{new_num} не найден")
-                    self._refresh_table()  # откат
+                    QTimer.singleShot(0, self._refresh_table)  # откат
                     return
 
             elif col == 4:  # Ручное время
@@ -629,7 +635,7 @@ class MainWindow(QMainWindow):
                         record.is_edited = True
                     else:
                         self.status_bar.show_error("Неверный формат времени")
-                        self._refresh_table()
+                        QTimer.singleShot(0, self._refresh_table)
                         return
                 else:
                     record.manual_time = None
@@ -644,11 +650,11 @@ class MainWindow(QMainWindow):
                 record.is_edited = True
 
             # Обновляем таблицу (места пересчитаются в _refresh_table)
-            self._refresh_table()
+            QTimer.singleShot(0, self._refresh_table)
 
         except ValueError as e:
             self.status_bar.show_error(f"Ошибка значения: {e}")
-            self._refresh_table()
+            QTimer.singleShot(0, self._refresh_table)
 
     def _on_load_registration(self) -> None:
         file_path, _ = QFileDialog.getOpenFileName(
