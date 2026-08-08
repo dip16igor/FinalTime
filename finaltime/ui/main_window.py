@@ -329,11 +329,6 @@ class MainWindow(QMainWindow):
         self.btn_finish.setEnabled(False)
         input_layout.addWidget(self.btn_finish, 0, 4, alignment=Qt.AlignmentFlag.AlignVCenter)
 
-        # Статус загруженных файлов
-        self.reg_file_label = QLabel("Файл регистрации: не загружен")
-        self.reg_file_label.setStyleSheet("color: #666; font-size: 12px;")
-        input_layout.addWidget(self.reg_file_label, 1, 0, 1, 5)
-
         main_layout.addWidget(input_group)
 
         # === ТАБЛИЦА РЕЗУЛЬТАТОВ ===
@@ -535,8 +530,6 @@ class MainWindow(QMainWindow):
         # Сброс UI
         self.competition_name_edit.setText("")
         self.competition_date_edit.setDate(self.competition_date)
-        self.reg_file_label.setText("Файл регистрации: не загружен")
-        self.reg_file_label.setStyleSheet("color: #666; font-size: 12px;")
         self.registration_file_label.setText("не загружен")
         self.registration_file_label.setStyleSheet("color: #666; font-size: 12px;")
         self.categories_file_label.setText("не загружен")
@@ -669,15 +662,13 @@ class MainWindow(QMainWindow):
             self.common_start = common_start
             self.registration_file = file_path
 
-            self.reg_file_label.setText(f"Файл регистрации: {Path(file_path).name} ({len(participants)} участников)")
-            if common_start:
-                self.reg_file_label.setText(
-                    self.reg_file_label.text() + f" | Общий старт: +{format_time_short(common_start)}"
-                )
-
-            # Верхняя панель: название файла регистрации
-            self.registration_file_label.setText(Path(file_path).name)
+            # Верхняя панель: название файла регистрации + количество участников
+            self.registration_file_label.setText(f"{Path(file_path).name} ({len(participants)} участ.)")
             self.registration_file_label.setStyleSheet("color: #27ae60; font-size: 12px;")
+            self.registration_file_label.setToolTip(
+                f"{len(participants)} участников | Общий старт: +{format_time_short(common_start)}"
+                if common_start else f"{len(participants)} участников"
+            )
 
             # Включаем кнопку Finish
             self._update_finish_button()
@@ -778,13 +769,8 @@ class MainWindow(QMainWindow):
             self.participants = state.participants
             # Восстанавливаем путь к файлу регистрации
             self.registration_file = state.registration_file
-            self.reg_file_label.setText(f"Файл регистрации: {Path(state.registration_file).name} ({len(self.participants)} участников)")
-            if state.common_start_offset:
-                self.reg_file_label.setText(
-                    self.reg_file_label.text() + f" | Общий старт: +{format_time_short(state.common_start_offset)}"
-                )
-            # Верхняя панель: название файла регистрации
-            self.registration_file_label.setText(Path(state.registration_file).name)
+            # Верхняя панель: название файла регистрации + количество участников
+            self.registration_file_label.setText(f"{Path(state.registration_file).name} ({len(self.participants)} участ.)")
             self.registration_file_label.setStyleSheet("color: #27ae60; font-size: 12px;")
             self._update_finish_button()
 
