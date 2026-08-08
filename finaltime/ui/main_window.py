@@ -5,7 +5,7 @@ from datetime import date, timedelta
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QTimer, Slot
-from PySide6.QtGui import QAction, QKeySequence, QShortcut
+from PySide6.QtGui import QAction, QIcon, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QApplication,
     QDateEdit,
@@ -642,6 +642,11 @@ def main() -> int:
     app = QApplication(sys.argv)
     app.setApplicationName("FinalTime")
     app.setApplicationVersion(get_version())
+
+    # Установка иконки приложения
+    icon_path = Path(__file__).parent.parent / "assets" / "icon.ico"
+    if icon_path.exists():
+        app.setWindowIcon(QIcon(str(icon_path)))
 
     window = MainWindow()
     window.show()

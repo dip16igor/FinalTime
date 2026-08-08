@@ -11,6 +11,7 @@ sys.path.insert(0, str(PROJECT_DIR))
 from finaltime.version import VERSION
 
 APP_NAME = f"FinalTime_v{VERSION}"
+ICON_PATH = str(PROJECT_DIR / "finaltime" / "assets" / "icon.ico")
 
 block_cipher = None
 
@@ -67,6 +68,7 @@ exe = EXE(
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
+    icon=ICON_PATH,
     codesign_identity=None,
     entitlements_file=None,
 )
