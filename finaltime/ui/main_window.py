@@ -44,7 +44,7 @@ from finaltime.io import ExcelImporter, Exporter, StateManager, CategoriesImport
 from finaltime.services import Logger, SessionManager
 from finaltime.assets.icon_data import ICON_ICO_B64
 from finaltime.ui.status_bar import StatusBar
-from finaltime.ui.widgets import ManualTimeLineEdit, NumberLineEdit, ResultsTable
+from finaltime.ui.widgets import HoldButton, ManualTimeLineEdit, NumberLineEdit, ResultsTable
 
 
 class MainWindow(QMainWindow):
@@ -215,7 +215,7 @@ class MainWindow(QMainWindow):
         """)
         self.btn_start.clicked.connect(self._on_start)
 
-        self.btn_stop = QPushButton("STOP")
+        self.btn_stop = HoldButton("STOP")
         self.btn_stop.setMinimumSize(100, 60)
         self.btn_stop.setStyleSheet("""
             QPushButton {
@@ -227,10 +227,10 @@ class MainWindow(QMainWindow):
             QPushButton:pressed { background: #a93226; }
             QPushButton:disabled { background: #f5a9a9; }
         """)
-        self.btn_stop.clicked.connect(self._on_stop)
+        self.btn_stop.hold_activated.connect(self._on_stop)
         self.btn_stop.setEnabled(False)
 
-        self.btn_reset = QPushButton("RESET")
+        self.btn_reset = HoldButton("RESET")
         self.btn_reset.setMinimumSize(100, 60)
         self.btn_reset.setStyleSheet("""
             QPushButton {
@@ -242,7 +242,7 @@ class MainWindow(QMainWindow):
             QPushButton:pressed { background: #d35400; }
             QPushButton:disabled { background: #f7c97e; }
         """)
-        self.btn_reset.clicked.connect(self._on_reset)
+        self.btn_reset.hold_activated.connect(self._on_reset)
 
         btn_layout.addWidget(self.btn_start)
         btn_layout.addWidget(self.btn_stop)

@@ -2,18 +2,125 @@
 
 from datetime import date, timedelta
 
-from PySide6.QtCore import QRegularExpression, Qt, Signal
-from PySide6.QtGui import QKeyEvent, QRegularExpressionValidator
+from PySide6.QtCore import QRegularExpression, Qt, QTimer, Signal
+from PySide6.QtGui import QColor, QKeyEvent, QPainter, QPainterPath, QPen, QRegularExpressionValidator
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QHeaderView,
     QLineEdit,
     QMenu,
+    QPushButton,
     QTableWidget,
     QTableWidgetItem,
 )
 
 from finaltime.core import AgeCategory, format_time_short
+
+
+class HoldButton(QPushButton):
+    """Кнопка, срабатывающая только при долгом удержании.
+
+    При удержании левой кнопки мыши по периметру кнопки рисуется
+    линия, которая уменьшается. Когда линия исчезает (через 3 сек),
+    кнопка срабатывает (сигнал hold_activated). Если отпустить раньше —
+    срабатывание отменяется.
+    """
+
+    hold_activated = Signal()
+
+    HOLD_TIMEOUT_MS = 3000      # 3 секунды
+    TICK_INTERVAL_MS = 30       # обновление прогресса
+    RING_WIDTH = 4              # толщина линии по периметру
+    RING_RADIUS = 6             # радиус скругления углов
+
+    def __init__(self, text: str = "", ring_color: str = "#ffffff", parent=None):
+        super().__init__(text, parent)
+        self._ring_color = QColor(ring_color)
+        self._progress = 0.0          # 1.0 = полная линия, 0.0 = срабатывание
+        self._holding = False
+        self._timer = QTimer(self)
+        self._timer.setInterval(self.TICK_INTERVAL_MS)
+        self._timer.timeout.connect(self._on_tick)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setToolTip("Удерживайте 3 секунды для подтверждения")
+
+    # === Управление удержанием ===
+
+    def _start_hold(self) -> None:
+        self._holding = True
+        self._progress = 1.0
+        self.setDown(True)
+        self._timer.start()
+        self.update()
+
+    def _cancel_hold(self) -> None:
+        self._holding = False
+        self._timer.stop()
+        self._progress = 0.0
+        self.setDown(False)
+        self.update()
+
+    def _complete_hold(self) -> None:
+        self._timer.stop()
+        self._holding = False
+        self._progress = 0.0
+        self.setDown(False)
+        self.update()
+        self.hold_activated.emit()
+
+    def _on_tick(self) -> None:
+        self._progress -= self.TICK_INTERVAL_MS / self.HOLD_TIMEOUT_MS
+        if self._progress <= 0.0:
+            self._progress = 0.0
+            self._complete_hold()
+        else:
+            self.update()
+
+    # === События мыши ===
+
+    def mousePressEvent(self, event) -> None:
+        if event.button() == Qt.MouseButton.LeftButton and self.isEnabled():
+            self._start_hold()
+            event.accept()
+        else:
+            super().mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event) -> None:
+        if self._holding:
+            self._cancel_hold()
+            event.accept()
+        else:
+            super().mouseReleaseEvent(event)
+
+    def mouseLeaveEvent(self, event) -> None:
+        if self._holding:
+            self._cancel_hold()
+        super().mouseLeaveEvent(event)
+
+    # === Отрисовка линии прогресса ===
+
+    def paintEvent(self, event) -> None:
+        super().paintEvent(event)
+        if not self._holding or self._progress <= 0.0:
+            return
+
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+        rect = self.rect().adjusted(2, 2, -2, -2)
+        path = QPainterPath()
+        path.addRoundedRect(rect, self.RING_RADIUS, self.RING_RADIUS)
+
+        pen = QPen(self._ring_color, self.RING_WIDTH)
+        pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+
+        total_len = path.length()
+        progress_len = max(total_len * self._progress, 0.0)
+        pen.setDashPattern([progress_len, total_len - progress_len + 0.1])
+
+        painter.setPen(pen)
+        painter.drawPath(path)
+        painter.end()
 
 
 class NumberLineEdit(QLineEdit):
