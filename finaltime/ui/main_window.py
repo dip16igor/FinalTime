@@ -107,33 +107,57 @@ class MainWindow(QMainWindow):
         main_layout.setSpacing(10)
         main_layout.setContentsMargins(15, 15, 15, 10)
 
-        # === ВЕРХНЯЯ ЧАСТЬ: ТАЙМЕР И НАСТРОЙКИ СОРЕВНОВАНИЙ ===
+        # === ВЕРХНЯЯ ЧАСТЬ: НАСТРОЙКИ СОРЕВНОВАНИЙ ===
         top_group = QGroupBox("Параметры соревнований")
-        top_layout = QHBoxLayout(top_group)
+        top_layout = QVBoxLayout(top_group)
         top_layout.setContentsMargins(15, 15, 15, 15)
-        top_layout.setSpacing(20)
+        top_layout.setSpacing(10)
 
-        # Дата соревнований
-        top_layout.addWidget(QLabel("Дата соревнований:"))
+        # Ряд 1: Дата соревнований + Файл регистрации
+        row1 = QHBoxLayout()
+        row1.setSpacing(15)
+
+        row1.addWidget(QLabel("Дата соревнований:"))
         self.competition_date_edit = QDateEdit()
         self.competition_date_edit.setCalendarPopup(True)
         self.competition_date_edit.setDate(self.competition_date)
         self.competition_date_edit.setDisplayFormat("dd.MM.yyyy")
-        self.competition_date_edit.setFixedWidth(150)
+        self.competition_date_edit.setFixedWidth(130)
         self.competition_date_edit.dateChanged.connect(self._on_competition_date_changed)
-        top_layout.addWidget(self.competition_date_edit)
+        row1.addWidget(self.competition_date_edit)
 
-        # Файл категорий
-        top_layout.addWidget(QLabel("Категории:"))
+        row1.addSpacing(20)
+
+        # Файл регистрации
+        row1.addWidget(QLabel("Регистрация:"))
+        self.registration_file_label = QLabel("не загружен")
+        self.registration_file_label.setStyleSheet("color: #666; font-size: 12px;")
+        self.registration_file_label.setMinimumWidth(220)
+        row1.addWidget(self.registration_file_label, 1)
+
+        self.btn_load_registration = QPushButton("Загрузить регистрацию")
+        self.btn_load_registration.setFixedWidth(170)
+        self.btn_load_registration.clicked.connect(self._on_load_registration)
+        row1.addWidget(self.btn_load_registration)
+
+        top_layout.addLayout(row1)
+
+        # Ряд 2: Файл категорий
+        row2 = QHBoxLayout()
+        row2.setSpacing(15)
+
+        row2.addWidget(QLabel("Категории:"))
         self.categories_file_label = QLabel("не загружен")
         self.categories_file_label.setStyleSheet("color: #666; font-size: 12px;")
-        self.categories_file_label.setMinimumWidth(200)
-        top_layout.addWidget(self.categories_file_label, 1)
+        self.categories_file_label.setMinimumWidth(220)
+        row2.addWidget(self.categories_file_label, 1)
 
         self.btn_load_categories = QPushButton("Загрузить категории")
-        self.btn_load_categories.setFixedWidth(160)
+        self.btn_load_categories.setFixedWidth(170)
         self.btn_load_categories.clicked.connect(self._on_load_categories)
-        top_layout.addWidget(self.btn_load_categories)
+        row2.addWidget(self.btn_load_categories)
+
+        top_layout.addLayout(row2)
 
         main_layout.addWidget(top_group)
 
@@ -454,6 +478,8 @@ class MainWindow(QMainWindow):
         self.competition_date_edit.setDate(self.competition_date)
         self.reg_file_label.setText("Файл регистрации: не загружен")
         self.reg_file_label.setStyleSheet("color: #666; font-size: 12px;")
+        self.registration_file_label.setText("не загружен")
+        self.registration_file_label.setStyleSheet("color: #666; font-size: 12px;")
         self.categories_file_label.setText("не загружен")
         self.categories_file_label.setStyleSheet("color: #666; font-size: 12px;")
         self.results_table.setRowCount(0)
@@ -581,6 +607,10 @@ class MainWindow(QMainWindow):
                     self.reg_file_label.text() + f" | Общий старт: +{format_time_short(common_start)}"
                 )
 
+            # Верхняя панель: название файла регистрации
+            self.registration_file_label.setText(Path(file_path).name)
+            self.registration_file_label.setStyleSheet("color: #27ae60; font-size: 12px;")
+
             # Включаем кнопку Finish
             self._update_finish_button()
 
@@ -675,6 +705,9 @@ class MainWindow(QMainWindow):
                 self.reg_file_label.setText(
                     self.reg_file_label.text() + f" | Общий старт: +{format_time_short(state.common_start_offset)}"
                 )
+            # Верхняя панель: название файла регистрации
+            self.registration_file_label.setText(Path(state.registration_file).name)
+            self.registration_file_label.setStyleSheet("color: #27ae60; font-size: 12px;")
             self._update_finish_button()
 
         # Восстанавливаем категории
