@@ -633,7 +633,11 @@ class MainWindow(QMainWindow):
                     record.is_edited = True
 
             elif col == 6:  # Штраф секунды
-                record.penalty_seconds = float(new_value) if new_value else 0.0
+                if new_value:
+                    # Запятая как десятичный разделитель -> точка
+                    record.penalty_seconds = float(new_value.replace(",", "."))
+                else:
+                    record.penalty_seconds = 0.0
                 record.is_edited = True
 
             elif col == 7:  # Штраф баллы
