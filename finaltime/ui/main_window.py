@@ -209,7 +209,7 @@ class MainWindow(QMainWindow):
         # Значения HHH:MM:SS.S — плотно по центру, с двоеточиями
         values_row = QHBoxLayout()
         values_row.setSpacing(2)
-        value_style = "font-size: 72px; font-family: 'Consolas', 'Monospace'; font-weight: bold; color: #222; background: transparent;"
+        value_style = "font-size: 96px; font-family: 'Consolas', 'Monospace'; font-weight: bold; color: #222; background: transparent;"
         self.timer_h_label = QLabel("000")
         self.timer_h_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.timer_h_label.setStyleSheet(value_style)

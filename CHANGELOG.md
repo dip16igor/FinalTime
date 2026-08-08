@@ -5,6 +5,11 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.0.0/),
 и проект следует [Semantic Versioning](https://semver.org/lang/ru/).
 
+## [1.7.4] - 2025-08-08
+
+### Изменено
+- Цифры таймера увеличены до 96px.
+
 ## [1.7.3] - 2025-08-08
 
 ### Изменено
