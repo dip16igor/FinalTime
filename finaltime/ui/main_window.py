@@ -613,7 +613,9 @@ class MainWindow(QMainWindow):
         if row >= len(self.finishes):
             return
 
-        record = self.finishes[row]
+        # Таблица показывает записи в обратном порядке (новые сверху):
+        # строка 0 -> finishes[-1], строка 1 -> finishes[-2] и т.д.
+        record = self.finishes[len(self.finishes) - 1 - row]
 
         try:
             if col == 1:  # Номер
