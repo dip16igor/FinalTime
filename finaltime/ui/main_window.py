@@ -4,6 +4,8 @@ import sys
 from datetime import date, timedelta
 from pathlib import Path
 
+import ctypes
+
 from PySide6.QtCore import Qt, QTimer, Slot
 from PySide6.QtGui import QAction, QIcon, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
@@ -637,16 +639,36 @@ class MainWindow(QMainWindow):
         event.accept()
 
 
+def _get_icon_path() -> Path:
+    """Находит путь к icon.ico (обычный запуск или PyInstaller exe)."""
+    if getattr(sys, 'frozen', False):
+        # Запущено из PyInstaller exe
+        base = Path(sys._MEIPASS)
+    else:
+        # Обычный запуск из исходников
+        base = Path(__file__).parent.parent
+    return base / "assets" / "icon.ico"
+
+
 def main() -> int:
     """Точка входа приложения."""
+    # Windows: иконка в панели задач
+    try:
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+            "FinalTime.App"
+        )
+    except Exception:
+        pass
+
     app = QApplication(sys.argv)
     app.setApplicationName("FinalTime")
     app.setApplicationVersion(get_version())
 
-    # Установка иконки приложения
-    icon_path = Path(__file__).parent.parent / "assets" / "icon.ico"
+    # Установка иконки приложения (панель задач + заголовок окна)
+    icon_path = _get_icon_path()
     if icon_path.exists():
-        app.setWindowIcon(QIcon(str(icon_path)))
+        icon = QIcon(str(icon_path))
+        app.setWindowIcon(icon)
 
     window = MainWindow()
     window.show()
