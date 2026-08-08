@@ -547,9 +547,10 @@ class MainWindow(QMainWindow):
         # Обновляем таблицу (показываем свежие сверху)
         self._refresh_table()
 
-        # Очищаем ввод
-        self.number_edit.clear_input()
-        self.manual_time_edit.clear_input()
+        # Очищаем ввод, фокус возвращаем в поле номера участника
+        self.number_edit.clear()
+        self.manual_time_edit.clear()
+        self.number_edit.setFocus()
         self._update_finish_button()
 
         # Автосохранение
