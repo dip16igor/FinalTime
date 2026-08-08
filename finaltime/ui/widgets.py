@@ -10,6 +10,8 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QMenu,
     QPushButton,
+    QStyle,
+    QStyleOptionFrame,
     QTableWidget,
     QTableWidgetItem,
 )
@@ -196,23 +198,22 @@ class NumberLineEdit(QLineEdit):
 class ManualTimeLineEdit(QLineEdit):
     """Поле ввода ручного времени в формате HHH:MM:SS.S.
 
-    Показывает образец 000:00:00.0 бледно-серым цветом, когда поле пустое.
+    Образец 000:00:00.0 виден всегда (бледно-серым).
+    Пользователь вводит только цифры — они перезаписывают образец
+    справа налево (как на секундомере), символы : и . подставляются
+    автоматически.
     """
 
     finish_requested = Signal()  # Enter нажат
 
+    SAMPLE = "000:00:00.0"
+    MAX_DIGITS = 8  # HHH(3) MM(2) SS(2) T(1)
+
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setPlaceholderText("000:00:00.0")
-        self.setMaxLength(11)  # HHH:MM:SS.S (3+1+2+1+2+1+1)
+        self._digits = ""  # введённые пользователем цифры
+        self.setMaxLength(len(self.SAMPLE))
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        # Валидатор: цифры с разделителями (допускает частичный ввод)
-        validator = QRegularExpressionValidator(
-            QRegularExpression(r"\d{0,3}(:\d{0,2})?(:\d{0,2}(\.\d{0,1})?)?"), self
-        )
-        self.setValidator(validator)
-
         self.setStyleSheet("""
             QLineEdit {
                 font-size: 18px;
@@ -224,50 +225,128 @@ class ManualTimeLineEdit(QLineEdit):
             QLineEdit:focus {
                 border-color: #4a90d9;
             }
-            QLineEdit::placeholder {
-                color: #bbb;
-            }
         """)
 
+    # === Ввод ===
+
     def keyPressEvent(self, event: QKeyEvent) -> None:
-        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+        key = event.key()
+        if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             self.finish_requested.emit()
             event.accept()
-        else:
-            super().keyPressEvent(event)
+            return
+        if key == Qt.Key.Key_Backspace:
+            self._digits = self._digits[:-1]
+            self.update()
+            event.accept()
+            return
+        if key == Qt.Key.Key_Delete:
+            self._digits = ""
+            self.update()
+            event.accept()
+            return
+
+        # Только цифры (основная клавиатура и цифровой блок)
+        ch = event.text()
+        if ch and ch.isdigit() and len(self._digits) < self.MAX_DIGITS:
+            self._digits += ch[-1]
+            self.update()
+            event.accept()
+            return
+
+        event.ignore()
+
+    # === Работа со значением ===
 
     def get_time(self) -> timedelta | None:
-        text = self.text().strip()
-        if not text:
+        """Возвращает введённое время или None, если поле пустое/нулевое."""
+        if not self._digits:
             return None
-
-        try:
-            parts = text.split(":")
-            if len(parts) != 3:
-                return None
-            hours = int(parts[0])
-            minutes = int(parts[1])
-            seconds = float(parts[2])
-
-            if minutes >= 60 or seconds >= 60:
-                return None
-
-            td = timedelta(hours=hours, minutes=minutes, seconds=seconds)
-            # Нулевое время считаем «не введено»
-            return td if td > timedelta(0) else None
-        except ValueError:
-            return None
+        d = self._digits.zfill(self.MAX_DIGITS)
+        hours = int(d[0:3])
+        minutes = int(d[3:5])
+        seconds = int(d[5:7])
+        tenths = int(d[7])
+        td = timedelta(
+            hours=hours, minutes=minutes,
+            seconds=seconds, milliseconds=tenths * 100,
+        )
+        return td if td > timedelta(0) else None
 
     def set_time(self, td: timedelta) -> None:
+        """Установить время (заполняет цифры)."""
         total = td.total_seconds()
         hours = int(total // 3600)
         minutes = int((total % 3600) // 60)
-        seconds = total % 60
-        self.setText(f"{hours:03d}:{minutes:02d}:{seconds:04.1f}")
+        seconds = int(total % 60)
+        tenths = int(round((total % 1) * 10)) % 10
+        self._digits = f"{hours:03d}{minutes:02d}{seconds:02d}{tenths}".lstrip("0")
+        self.update()
+
+    # === Совместимость с QLineEdit (сохранение/восстановление состояния) ===
+
+    def text(self) -> str:
+        """Отформатированная строка HHH:MM:SS.S для сохранения состояния."""
+        if not self._digits:
+            return ""
+        d = self._digits.zfill(self.MAX_DIGITS)
+        return f"{d[0:3]}:{d[3:5]}:{d[5:7]}.{d[7]}"
+
+    def setText(self, text: str) -> None:
+        """Восстановить цифры из отформатированной строки."""
+        if not text:
+            self._digits = ""
+        else:
+            digits = "".join(ch for ch in text if ch.isdigit())
+            self._digits = digits.lstrip("0")[: self.MAX_DIGITS]
+        self.update()
+
+    def clear(self) -> None:
+        self._digits = ""
+        self.update()
 
     def clear_input(self) -> None:
-        self.clear()
+        self._digits = ""
+        self.update()
         self.setFocus()
+
+    # === Отрисовка: образец + введённые цифры ===
+
+    def paintEvent(self, event) -> None:
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+        # Рамка и фон поля (учитывает фокус)
+        opt = QStyleOptionFrame()
+        opt.initFrom(self)
+        opt.lineWidth = 1
+        opt.midLineWidth = 0
+        opt.state |= QStyle.StateFlag.State_Sunken
+        self.style().drawPrimitive(
+            QStyle.PrimitiveElement.PE_PanelLineEdit, opt, painter, self
+        )
+
+        # Текст по центру, моноширинный
+        fm = self.fontMetrics()
+        painter.setFont(self.font())
+        char_w = fm.horizontalAdvance("0")
+        text_w = char_w * len(self.SAMPLE)
+
+        rect = self.rect()
+        x0 = rect.x() + max((rect.width() - text_w) // 2, 6)
+        baseline = rect.y() + (rect.height() - fm.height()) // 2 + fm.ascent()
+
+        # Образец бледно-серым
+        painter.setPen(QColor("#bbb"))
+        painter.drawText(x0, baseline, self.SAMPLE)
+
+        # Введённые цифры тёмным (справа налево)
+        painter.setPen(QColor("#222"))
+        for k, digit in enumerate(self._digits):
+            pos = len(self.SAMPLE) - 1 - k
+            painter.drawText(x0 + pos * char_w, baseline, digit)
+
+        painter.end()
 
 
 class EditableTableWidgetItem(QTableWidgetItem):
