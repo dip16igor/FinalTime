@@ -38,6 +38,7 @@ from finaltime.core import (
     calculate_all_results,
     format_time_short,
     get_participant_by_number,
+    parse_time_str,
     validate_manual_time,
 )
 from finaltime.io import ExcelImporter, Exporter, StateManager, CategoriesImporter
@@ -690,6 +691,7 @@ class MainWindow(QMainWindow):
             self.results_table.blockSignals(False)
 
     def _autosave(self) -> None:
+        ts = self.timer.get_state()
         state = CompetitionState(
             competition_name=self.competition_name,
             registration_file=self.registration_file,
@@ -697,8 +699,10 @@ class MainWindow(QMainWindow):
             competition_date=self.competition_date.isoformat(),
             participants=self.participants,
             finishes=self.finishes,
-            timer_elapsed=self.timer.elapsed,
-            timer_running=self.timer.running,
+            timer_elapsed=ts.elapsed,
+            timer_running=ts.running,
+            timer_base_elapsed=format_time_short(ts.base_elapsed),
+            timer_started_at=ts.started_at,
             common_start_offset=self.common_start,
             pending_number=self.number_edit.text(),
             pending_manual_time=self.manual_time_edit.text(),
@@ -752,9 +756,15 @@ class MainWindow(QMainWindow):
         self.finishes = state.finishes
         self._refresh_table()
 
-        # Восстанавливаем таймер
+        # Восстанавливаем таймер (реальное время от системных часов)
         self.common_start = state.common_start_offset
-        self.timer.restore_state(TimerState(state.timer_elapsed, state.timer_running))
+        timer_state = TimerState(
+            elapsed=state.timer_elapsed,
+            running=state.timer_running,
+            base_elapsed=parse_time_str(state.timer_base_elapsed) if state.timer_base_elapsed else timedelta(0),
+            started_at=state.timer_started_at,
+        )
+        self.timer.restore_state(timer_state)
         # Обновляем кнопки таймера вручную
         self._update_timer_buttons(self.timer.running)
 

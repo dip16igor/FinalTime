@@ -66,6 +66,8 @@ class StateManager:
                 ],
                 "timer_elapsed": format_time_short(state.timer_elapsed),
                 "timer_running": state.timer_running,
+                "timer_base_elapsed": state.timer_base_elapsed,
+                "timer_started_at": state.timer_started_at,
                 "common_start_offset": format_time_short(state.common_start_offset) if state.common_start_offset else None,
                 "pending_number": state.pending_number,
                 "pending_manual_time": state.pending_manual_time,
@@ -144,6 +146,8 @@ class StateManager:
 
             timer_elapsed = parse_time_str(data.get("timer_elapsed", "0"))
             timer_running = data.get("timer_running", False)
+            timer_base_elapsed = data.get("timer_base_elapsed", "")
+            timer_started_at = data.get("timer_started_at")
             common_start = None
             if data.get("common_start_offset"):
                 common_start = parse_time_str(data["common_start_offset"])
@@ -157,6 +161,8 @@ class StateManager:
                 finishes=finishes,
                 timer_elapsed=timer_elapsed,
                 timer_running=timer_running,
+                timer_base_elapsed=timer_base_elapsed,
+                timer_started_at=timer_started_at,
                 common_start_offset=common_start,
                 pending_number=data.get("pending_number", ""),
                 pending_manual_time=data.get("pending_manual_time", ""),

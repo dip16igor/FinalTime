@@ -129,6 +129,8 @@ class CompetitionState:
     finishes: list[FinishRecord] = field(default_factory=list)
     timer_elapsed: timedelta = timedelta(0)
     timer_running: bool = False
+    timer_base_elapsed: str = ""            # время на момент старта (MM:SS.s)
+    timer_started_at: float | None = None   # time.time() в момент старта
     common_start_offset: timedelta | None = None
     pending_number: str = ""
     pending_manual_time: str = ""
