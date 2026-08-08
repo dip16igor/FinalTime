@@ -208,6 +208,9 @@ class ManualTimeLineEdit(QLineEdit):
 
     SAMPLE = "000:00:00.0"
     MAX_DIGITS = 8  # HHH(3) MM(2) SS(2) T(1)
+    # Индексы позиций цифр в SAMPLE (пропуская : и .)
+    # HHH(0-2) : MM(4-5) : SS(7-8) . T(10)
+    DIGIT_POSITIONS = [0, 1, 2, 4, 5, 7, 8, 10]
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -342,10 +345,11 @@ class ManualTimeLineEdit(QLineEdit):
         painter.setPen(QColor("#bbb"))
         painter.drawText(x0, baseline, self.SAMPLE)
 
-        # Введённые цифры тёмным (слева направо)
+        # Введённые цифры тёмным (слева направо, по позициям образца)
         painter.setPen(QColor("#222"))
         for k, digit in enumerate(self._digits):
-            painter.drawText(x0 + k * char_w, baseline, digit)
+            pos = self.DIGIT_POSITIONS[k]
+            painter.drawText(x0 + pos * char_w, baseline, digit)
 
         painter.end()
 
