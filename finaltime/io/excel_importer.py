@@ -20,6 +20,7 @@ class ExcelImporter:
         self.col_start = 2       # Стартовое время (опционально)
         self.col_dob = 3         # Дата рождения (опционально)
         self.col_gender = 4      # Пол (опционально)
+        self.col_rank = 5        # Спортивный разряд (опционально)
 
     def load(self, file_path: str) -> tuple[list[Participant], timedelta | None]:
         """Загружает участников из Excel.
@@ -85,12 +86,20 @@ class ExcelImporter:
                         if gender_str:
                             gender = Gender.from_string(gender_str)
 
+                # Разряд
+                rank = ""
+                if len(row) > self.col_rank:
+                    raw_rank = row[self.col_rank]
+                    if raw_rank is not None:
+                        rank = str(raw_rank).strip()
+
                 participant = Participant(
                     number=number,
                     full_name=name,
                     start_offset=start_offset,
                     date_of_birth=date_of_birth,
-                    gender=gender
+                    gender=gender,
+                    rank=rank,
                 )
                 participants.append(participant)
 
@@ -111,7 +120,8 @@ class ExcelImporter:
         name: int,
         start: int = -1,
         dob: int = -1,
-        gender: int = -1
+        gender: int = -1,
+        rank: int = -1
     ) -> None:
         """Настройка маппинга столбцов (0-based)."""
         self.col_number = number
@@ -119,3 +129,4 @@ class ExcelImporter:
         self.col_start = start
         self.col_dob = dob
         self.col_gender = gender
+        self.col_rank = rank

@@ -56,7 +56,7 @@ class Exporter:
         bronze_fill = PatternFill(start_color='CD7F32', end_color='CD7F32', fill_type='solid')
 
         # === ЗАГОЛОВОК ОТЧЁТА ===
-        ws.merge_cells('A1:I1')
+        ws.merge_cells('A1:J1')
         if competition_name.strip():
             ws['A1'] = competition_name.strip().upper()
         else:
@@ -65,13 +65,13 @@ class Exporter:
         ws['A1'].alignment = Alignment(horizontal='center', vertical='center')
         ws.row_dimensions[1].height = 35
 
-        ws.merge_cells('A2:I2')
+        ws.merge_cells('A2:J2')
         ws['A2'] = f"Сгенерировано FinalTime v{get_version()}"
         ws['A2'].font = subtitle_font
         ws['A2'].alignment = Alignment(horizontal='center')
 
         if competition_date:
-            ws.merge_cells('A3:I3')
+            ws.merge_cells('A3:J3')
             ws['A3'] = f"Дата соревнований: {competition_date.strftime('%d.%m.%Y')}"
             ws['A3'].font = subtitle_font
             ws['A3'].alignment = Alignment(horizontal='center')
@@ -80,7 +80,7 @@ class Exporter:
             header_row = 4
 
         if registration_file:
-            ws.merge_cells(f'A{header_row}:I{header_row}')
+            ws.merge_cells(f'A{header_row}:J{header_row}')
             ws[f'A{header_row}'] = f"Файл регистрации: {Path(registration_file).name}"
             ws[f'A{header_row}'].font = subtitle_font
             ws[f'A{header_row}'].alignment = Alignment(horizontal='center')
@@ -88,7 +88,7 @@ class Exporter:
 
         # === ЗАГОЛОВКИ ТАБЛИЦЫ ===
         headers = [
-            "Место", "Номер", "ФИО участника", "Категория",
+            "Место", "Номер", "ФИО участника", "Разряд", "Категория",
             "Время таймера", "Ручное время",
             "Штраф (сек)", "Штраф (баллы)", "Итоговое время"
         ]
@@ -128,6 +128,7 @@ class Exporter:
                 place,
                 record.participant.number,
                 record.participant.full_name,
+                record.participant.rank,
                 category_str,
                 timer_str,
                 manual_str,
@@ -150,7 +151,7 @@ class Exporter:
                     cell.fill = row_fill
 
         # === НАСТРОЙКА ШИРИНЫ КОЛОНОК ===
-        column_widths = [8, 10, 35, 12, 15, 15, 12, 14, 16]
+        column_widths = [8, 10, 35, 10, 12, 15, 15, 12, 14, 16]
         for i, width in enumerate(column_widths, 1):
             ws.column_dimensions[get_column_letter(i)].width = width
 
@@ -195,7 +196,7 @@ class Exporter:
 
             # Header
             writer.writerow([
-                "Place", "Number", "Name", "Category",
+                "Place", "Number", "Name", "Rank", "Category",
                 "Timer Time", "Manual Time",
                 "Penalty (sec)", "Penalty (pts)", "Final Time"
             ])
@@ -214,6 +215,7 @@ class Exporter:
                     record.place,
                     record.participant.number,
                     record.participant.full_name,
+                    record.participant.rank,
                     category_str,
                     timer_str,
                     manual_str,

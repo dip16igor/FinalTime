@@ -47,6 +47,7 @@ class StateManager:
                         "start_offset": format_time_short(p.start_offset) if p.start_offset else None,
                         "date_of_birth": p.date_of_birth.isoformat() if p.date_of_birth else None,
                         "gender": p.gender.value,
+                        "rank": p.rank,
                     }
                     for p in state.participants
                 ],
@@ -108,6 +109,7 @@ class StateManager:
                     start_offset=start_offset,
                     date_of_birth=date_of_birth,
                     gender=Gender.from_string(p_data.get("gender", "")),
+                    rank=p_data.get("rank", ""),
                 ))
 
             # Финиши - нужно восстановить ссылки на участников

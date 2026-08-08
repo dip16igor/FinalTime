@@ -57,6 +57,7 @@ class Participant:
     start_offset: timedelta | None = None      # персональное смещение старта +MM:SS
     date_of_birth: date | None = None          # дата рождения
     gender: Gender = Gender.UNKNOWN            # пол
+    rank: str = ""                             # спортивный разряд (1, 2, 3, КМС, МС, ЗМС, ...)
 
     def __post_init__(self):
         if isinstance(self.start_offset, str):
