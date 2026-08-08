@@ -7,8 +7,10 @@ from pathlib import Path
 from finaltime.core import (
     CompetitionState,
     FinishRecord,
+    Gender,
     Participant,
     format_time_short,
+    parse_date,
     parse_time_str,
 )
 
@@ -43,6 +45,8 @@ class StateManager:
                         "number": p.number,
                         "full_name": p.full_name,
                         "start_offset": format_time_short(p.start_offset) if p.start_offset else None,
+                        "date_of_birth": p.date_of_birth.isoformat() if p.date_of_birth else None,
+                        "gender": p.gender.value,
                     }
                     for p in state.participants
                 ],
@@ -90,10 +94,18 @@ class StateManager:
                 start_offset = None
                 if p_data.get("start_offset"):
                     start_offset = parse_time_str(p_data["start_offset"])
+                date_of_birth = None
+                if p_data.get("date_of_birth"):
+                    try:
+                        date_of_birth = parse_date(p_data["date_of_birth"])
+                    except ValueError:
+                        date_of_birth = None
                 participants.append(Participant(
                     number=p_data["number"],
                     full_name=p_data["full_name"],
                     start_offset=start_offset,
+                    date_of_birth=date_of_birth,
+                    gender=Gender.from_string(p_data.get("gender", "")),
                 ))
 
             # Финиши - нужно восстановить ссылки на участников
