@@ -199,9 +199,9 @@ class ManualTimeLineEdit(QLineEdit):
     """Поле ввода ручного времени в формате HHH:MM:SS.S.
 
     Образец 000:00:00.0 виден всегда (бледно-серым).
-    Пользователь вводит только цифры — они перезаписывают образец
-    справа налево (как на секундомере), символы : и . подставляются
-    автоматически.
+    Цифры вводятся слева направо, от старших разрядов часов:
+    первая цифра — сотни часов, далее десятки/единицы часов, минуты,
+    секунды и десятые доли. Символы : и . подставляются автоматически.
     """
 
     finish_requested = Signal()  # Enter нажат
@@ -258,11 +258,16 @@ class ManualTimeLineEdit(QLineEdit):
 
     # === Работа со значением ===
 
+    def _formatted(self) -> str:
+        """Форматированная строка HHH:MM:SS.S с заполнением нулями справа."""
+        d = self._digits.ljust(self.MAX_DIGITS, "0")
+        return f"{d[0:3]}:{d[3:5]}:{d[5:7]}.{d[7]}"
+
     def get_time(self) -> timedelta | None:
         """Возвращает введённое время или None, если поле пустое/нулевое."""
         if not self._digits:
             return None
-        d = self._digits.zfill(self.MAX_DIGITS)
+        d = self._digits.ljust(self.MAX_DIGITS, "0")
         hours = int(d[0:3])
         minutes = int(d[3:5])
         seconds = int(d[5:7])
@@ -274,23 +279,20 @@ class ManualTimeLineEdit(QLineEdit):
         return td if td > timedelta(0) else None
 
     def set_time(self, td: timedelta) -> None:
-        """Установить время (заполняет цифры)."""
+        """Установить время (заполняет цифры слева направо)."""
         total = td.total_seconds()
         hours = int(total // 3600)
         minutes = int((total % 3600) // 60)
         seconds = int(total % 60)
         tenths = int(round((total % 1) * 10)) % 10
-        self._digits = f"{hours:03d}{minutes:02d}{seconds:02d}{tenths}".lstrip("0")
+        self._digits = f"{hours:03d}{minutes:02d}{seconds:02d}{tenths}"
         self.update()
 
     # === Совместимость с QLineEdit (сохранение/восстановление состояния) ===
 
     def text(self) -> str:
         """Отформатированная строка HHH:MM:SS.S для сохранения состояния."""
-        if not self._digits:
-            return ""
-        d = self._digits.zfill(self.MAX_DIGITS)
-        return f"{d[0:3]}:{d[3:5]}:{d[5:7]}.{d[7]}"
+        return self._formatted() if self._digits else ""
 
     def setText(self, text: str) -> None:
         """Восстановить цифры из отформатированной строки."""
@@ -298,7 +300,7 @@ class ManualTimeLineEdit(QLineEdit):
             self._digits = ""
         else:
             digits = "".join(ch for ch in text if ch.isdigit())
-            self._digits = digits.lstrip("0")[: self.MAX_DIGITS]
+            self._digits = digits[: self.MAX_DIGITS]
         self.update()
 
     def clear(self) -> None:
@@ -340,11 +342,10 @@ class ManualTimeLineEdit(QLineEdit):
         painter.setPen(QColor("#bbb"))
         painter.drawText(x0, baseline, self.SAMPLE)
 
-        # Введённые цифры тёмным (справа налево)
+        # Введённые цифры тёмным (слева направо)
         painter.setPen(QColor("#222"))
         for k, digit in enumerate(self._digits):
-            pos = len(self.SAMPLE) - 1 - k
-            painter.drawText(x0 + pos * char_w, baseline, digit)
+            painter.drawText(x0 + k * char_w, baseline, digit)
 
         painter.end()
 
