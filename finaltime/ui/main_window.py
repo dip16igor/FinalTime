@@ -625,7 +625,7 @@ class MainWindow(QMainWindow):
                     QTimer.singleShot(0, self._refresh_table)  # откат
                     return
 
-            elif col == 4:  # Ручное время
+            elif col == 5:  # Ручное время
                 if new_value.strip():
                     td = validate_manual_time(new_value)
                     if td is not None:
@@ -639,11 +639,11 @@ class MainWindow(QMainWindow):
                     record.manual_time = None
                     record.is_edited = True
 
-            elif col == 5:  # Штраф секунды
+            elif col == 6:  # Штраф секунды
                 record.penalty_seconds = float(new_value) if new_value else 0.0
                 record.is_edited = True
 
-            elif col == 6:  # Штраф баллы
+            elif col == 7:  # Штраф баллы
                 record.penalty_points = int(new_value) if new_value else 0
                 record.is_edited = True
 

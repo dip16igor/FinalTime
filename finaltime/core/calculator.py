@@ -89,20 +89,33 @@ def validate_number_input(text: str) -> int | None:
 
 
 def validate_manual_time(text: str) -> timedelta | None:
-    """Валидация ручного времени в формате HHH:MM:SS.sss."""
+    """Валидация ручного времени.
+
+    Принимает форматы:
+    - HHH:MM:SS.S
+    - MM:SS.S
+    - SS.S
+    """
     text = text.strip()
     if not text:
         return None
 
-    # Проверяем формат
     parts = text.split(":")
-    if len(parts) != 3:
-        return None
-
     try:
-        hours = int(parts[0])
-        minutes = int(parts[1])
-        seconds = float(parts[2])
+        if len(parts) == 3:
+            hours = int(parts[0])
+            minutes = int(parts[1])
+            seconds = float(parts[2])
+        elif len(parts) == 2:
+            hours = 0
+            minutes = int(parts[0])
+            seconds = float(parts[1])
+        elif len(parts) == 1:
+            hours = 0
+            minutes = 0
+            seconds = float(parts[0])
+        else:
+            return None
 
         if hours < 0 or minutes < 0 or minutes >= 60 or seconds < 0 or seconds >= 60:
             return None
