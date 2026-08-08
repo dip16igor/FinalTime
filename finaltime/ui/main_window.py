@@ -354,10 +354,6 @@ class MainWindow(QMainWindow):
         shortcut_space = QShortcut(QKeySequence(Qt.Key.Key_Space), self)
         shortcut_space.activated.connect(self._on_space)
 
-        # Escape - RESET
-        shortcut_esc = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
-        shortcut_esc.activated.connect(self._on_reset)
-
         # Ctrl+O - Открыть файл регистрации
         shortcut_open = QShortcut(QKeySequence("Ctrl+O"), self)
         shortcut_open.activated.connect(self._on_load_registration)
@@ -401,15 +397,15 @@ class MainWindow(QMainWindow):
         # Таймер
         timer_menu = menubar.addMenu("Таймер")
 
-        act_start = QAction("Старт (Space)", self)
+        act_start = QAction("Старт", self)
         act_start.triggered.connect(self._on_start)
         timer_menu.addAction(act_start)
 
-        act_stop = QAction("Стоп (Space)", self)
+        act_stop = QAction("Стоп", self)
         act_stop.triggered.connect(self._on_stop)
         timer_menu.addAction(act_stop)
 
-        act_reset = QAction("Сброс (Esc)", self)
+        act_reset = QAction("Сброс", self)
         act_reset.triggered.connect(self._on_reset)
         timer_menu.addAction(act_reset)
 
