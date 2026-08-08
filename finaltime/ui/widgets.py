@@ -2,7 +2,7 @@
 
 from datetime import date, timedelta
 
-from PySide6.QtCore import QRegularExpression, Qt, QTimer, Signal
+from PySide6.QtCore import QElapsedTimer, QRegularExpression, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QKeyEvent, QPainter, QPainterPath, QPen, QPolygonF, QRegularExpressionValidator
 from PySide6.QtWidgets import (
     QAbstractItemView,
@@ -31,13 +31,15 @@ class HoldButton(QPushButton):
     HOLD_TIMEOUT_MS = 3000      # 3 секунды
     TICK_INTERVAL_MS = 30       # обновление прогресса
     RING_WIDTH = 4              # толщина линии по периметру
-    RING_RADIUS = 6             # радиус скругления углов
+    RING_RADIUS = 6             # радиус скругления углов кнопки (QSS border-radius)
+    RING_INSET = 2              # отступ линии от края кнопки
 
     def __init__(self, text: str = "", ring_color: str = "#ffffff", parent=None):
         super().__init__(text, parent)
         self._ring_color = QColor(ring_color)
         self._progress = 0.0          # 1.0 = полная линия, 0.0 = срабатывание
         self._holding = False
+        self._hold_start = QElapsedTimer()
         self._timer = QTimer(self)
         self._timer.setInterval(self.TICK_INTERVAL_MS)
         self._timer.timeout.connect(self._on_tick)
@@ -49,6 +51,7 @@ class HoldButton(QPushButton):
     def _start_hold(self) -> None:
         self._holding = True
         self._progress = 1.0
+        self._hold_start.start()
         self.setDown(True)
         self._timer.start()
         self.update()
@@ -69,9 +72,12 @@ class HoldButton(QPushButton):
         self.hold_activated.emit()
 
     def _on_tick(self) -> None:
-        self._progress -= self.TICK_INTERVAL_MS / self.HOLD_TIMEOUT_MS
-        if self._progress <= 0.0:
-            self._progress = 0.0
+        # Прогресс считаем от реально прошедшего времени, а не от количества
+        # тиков: Qt сливает таймерные события, если очередь занята отрисовкой,
+        # из-за чего фиксированное уменьшение за тик замедляло анимацию вдвое.
+        elapsed_ms = self._hold_start.elapsed()
+        self._progress = max(1.0 - elapsed_ms / self.HOLD_TIMEOUT_MS, 0.0)
+        if elapsed_ms >= self.HOLD_TIMEOUT_MS:
             self._complete_hold()
         else:
             self.update()
@@ -107,9 +113,16 @@ class HoldButton(QPushButton):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-        rect = self.rect().adjusted(2, 2, -2, -2)
+        # Линия идёт по периметру с отступом RING_INSET от края кнопки.
+        # Радиус скругления линии должен быть меньше радиуса кнопки на
+        # величину отступа, иначе углы линии не совпадут с углами кнопки.
+        rect = self.rect().adjusted(
+            self.RING_INSET, self.RING_INSET,
+            -self.RING_INSET, -self.RING_INSET,
+        )
+        radius = max(self.RING_RADIUS - self.RING_INSET, 1)
         path = QPainterPath()
-        path.addRoundedRect(rect, self.RING_RADIUS, self.RING_RADIUS)
+        path.addRoundedRect(rect, radius, radius)
 
         # Рисуем линию по периметру, уменьшающуюся при удержании.
         # Используем pointAtPercent + polyline, т.к. dash-паттерн Qt
