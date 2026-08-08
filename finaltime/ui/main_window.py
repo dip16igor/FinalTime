@@ -752,6 +752,8 @@ class MainWindow(QMainWindow):
         # Восстанавливаем таймер
         self.common_start = state.common_start_offset
         self.timer.restore_state(TimerState(state.timer_elapsed, state.timer_running))
+        # Обновляем кнопки таймера вручную
+        self._update_timer_buttons(self.timer.running)
 
         # Восстанавливаем ввод
         self.number_edit.setText(state.pending_number)

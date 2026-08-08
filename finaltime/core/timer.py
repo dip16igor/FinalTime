@@ -77,9 +77,14 @@ class AppTimer(QObject):
 
     def restore_state(self, state: TimerState) -> None:
         self._elapsed = state.elapsed
+        was_running = self._running
         self._running = state.running
         self.tick.emit(self._elapsed)
         if self._running:
             self._timer.start()
+            if not was_running:
+                self.started.emit()
         else:
             self._timer.stop()
+            if was_running:
+                self.stopped.emit()

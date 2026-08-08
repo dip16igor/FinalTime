@@ -5,6 +5,11 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.0.0/),
 и проект следует [Semantic Versioning](https://semver.org/lang/ru/).
 
+## [1.5.2] - 2025-08-08
+
+### Исправлено
+- Кнопка STOP была неактивна после восстановления работающего таймера из state.json. Теперь `restore_state` эмитит сигналы `started`/`stopped`, кнопки обновляются корректно.
+
 ## [1.5.1] - 2025-08-08
 
 ### Изменено
