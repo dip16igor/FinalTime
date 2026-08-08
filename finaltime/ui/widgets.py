@@ -341,15 +341,23 @@ class ManualTimeLineEdit(QLineEdit):
         x0 = rect.x() + max((rect.width() - text_w) // 2, 6)
         baseline = rect.y() + (rect.height() - fm.height()) // 2 + fm.ascent()
 
-        # Образец бледно-серым
-        painter.setPen(QColor("#bbb"))
-        painter.drawText(x0, baseline, self.SAMPLE)
-
-        # Введённые цифры тёмным (слева направо, по позициям образца)
-        painter.setPen(QColor("#222"))
-        for k, digit in enumerate(self._digits):
-            pos = self.DIGIT_POSITIONS[k]
-            painter.drawText(x0 + pos * char_w, baseline, digit)
+        # Рисуем символы по отдельности:
+        # - разделители (:, .) всегда серые
+        # - введённая цифра — тёмная, образец под ней не рисуется
+        # - пустая позиция — серый символ образца
+        for pos, ch in enumerate(self.SAMPLE):
+            x = x0 + pos * char_w
+            if ch in ":.":
+                painter.setPen(QColor("#bbb"))
+                painter.drawText(x, baseline, ch)
+                continue
+            digit_idx = self.DIGIT_POSITIONS.index(pos)
+            if digit_idx < len(self._digits):
+                painter.setPen(QColor("#222"))
+                painter.drawText(x, baseline, self._digits[digit_idx])
+            else:
+                painter.setPen(QColor("#bbb"))
+                painter.drawText(x, baseline, ch)
 
         painter.end()
 
