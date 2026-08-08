@@ -182,33 +182,30 @@ class MainWindow(QMainWindow):
 
         # Крупный таймер с подписями HHH / MM / SS.S
         timer_display = QWidget()
-        timer_display.setStyleSheet("""
-            QWidget {
-                background: #f5f5f5;
-                border: 3px solid #ddd;
-                border-radius: 8px;
-                padding: 8px 20px;
-            }
-        """)
+        timer_display.setStyleSheet(
+            "background: #f5f5f5; border-radius: 8px;"
+        )
         timer_display_layout = QVBoxLayout(timer_display)
-        timer_display_layout.setContentsMargins(20, 10, 20, 12)
+        timer_display_layout.setContentsMargins(20, 8, 20, 10)
         timer_display_layout.setSpacing(0)
 
-        # Строка подписей (HHH MM SS.S) над значениями
+        # Подписи над значениями (без рамок, без двоеточий)
         labels_row = QHBoxLayout()
-        labels_row.setSpacing(0)
-        unit_style = "font-size: 15px; font-weight: bold; color: #999; font-family: 'Consolas', 'Monospace';"
-        for text in ("HHH", ":", "MM", ":", "SS.S"):
+        labels_row.setSpacing(2)
+        unit_style = "font-size: 15px; font-weight: bold; color: #999; font-family: 'Consolas', 'Monospace'; background: transparent;"
+        labels_row.addStretch(1)
+        for text in ("HHH", "MM", "SS.S"):
             lbl = QLabel(text)
             lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
             lbl.setStyleSheet(unit_style)
-            labels_row.addWidget(lbl, 1 if text not in (":",) else 0)
+            labels_row.addWidget(lbl)
+        labels_row.addStretch(1)
         timer_display_layout.addLayout(labels_row)
 
-        # Строка значений HHH:MM:SS.S
+        # Значения HHH MM SS.S — плотно по центру, без двоеточий
         values_row = QHBoxLayout()
-        values_row.setSpacing(0)
-        value_style = "font-size: 72px; font-family: 'Consolas', 'Monospace'; font-weight: bold; color: #222; background: transparent; border: none;"
+        values_row.setSpacing(2)
+        value_style = "font-size: 72px; font-family: 'Consolas', 'Monospace'; font-weight: bold; color: #222; background: transparent;"
         self.timer_h_label = QLabel("000")
         self.timer_h_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.timer_h_label.setStyleSheet(value_style)
@@ -218,20 +215,15 @@ class MainWindow(QMainWindow):
         self.timer_s_label = QLabel("00.0")
         self.timer_s_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.timer_s_label.setStyleSheet(value_style)
-        colon_style = "font-size: 72px; font-family: 'Consolas', 'Monospace'; font-weight: bold; color: #222; background: transparent; border: none;"
-        colon1 = QLabel(":")
-        colon1.setStyleSheet(colon_style)
-        colon2 = QLabel(":")
-        colon2.setStyleSheet(colon_style)
-        values_row.addWidget(self.timer_h_label, 1)
-        values_row.addWidget(colon1, 0)
-        values_row.addWidget(self.timer_m_label, 1)
-        values_row.addWidget(colon2, 0)
-        values_row.addWidget(self.timer_s_label, 1)
+        values_row.addStretch(1)
+        values_row.addWidget(self.timer_h_label)
+        values_row.addWidget(self.timer_m_label)
+        values_row.addWidget(self.timer_s_label)
+        values_row.addStretch(1)
         timer_display_layout.addLayout(values_row)
 
         self.timer_label = timer_display  # для совместимости (используется как контейнер)
-        timer_display.setMinimumWidth(420)
+        timer_display.setMinimumWidth(300)
         timer_layout.addWidget(timer_display, 1)
 
         # Кнопки управления таймером
