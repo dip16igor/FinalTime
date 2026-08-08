@@ -314,6 +314,12 @@ class MainWindow(QMainWindow):
 
         file_menu.addSeparator()
 
+        act_clean = QAction("Чистая загрузка", self)
+        act_clean.triggered.connect(self._on_clean_load)
+        file_menu.addAction(act_clean)
+
+        file_menu.addSeparator()
+
         act_exit = QAction("Выход", self)
         act_exit.triggered.connect(self.close)
         file_menu.addAction(act_exit)
@@ -409,6 +415,53 @@ class MainWindow(QMainWindow):
     def _on_reset(self) -> None:
         self.timer.reset()
         self.status_bar.show_info("Таймер сброшен")
+
+    def _on_clean_load(self) -> None:
+        """Полный сброс состояния приложения к начальному."""
+        answer = QMessageBox.question(
+            self, "Чистая загрузка",
+            "Сбросить всё состояние программы?\n\n"
+            "Будут удалены:\n"
+            "- участники и результаты\n"
+            "- категории\n"
+            "- состояние таймера и ввода\n"
+            "- сохранённое состояние (state.json)\n\n"
+            "Это действие необратимо.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+
+        # Сброс данных
+        self.participants = []
+        self.finishes = []
+        self.categories = []
+        self.common_start = None
+        self.registration_file = ""
+        self.categories_file = ""
+        self.competition_date = date.today()
+
+        # Сброс таймера
+        self.timer.reset()
+
+        # Сброс ввода
+        self.number_edit.clear_input()
+        self.manual_time_edit.clear_input()
+        self._update_finish_button()
+
+        # Сброс UI
+        self.competition_date_edit.setDate(self.competition_date)
+        self.reg_file_label.setText("Файл регистрации: не загружен")
+        self.reg_file_label.setStyleSheet("color: #666; font-size: 12px;")
+        self.categories_file_label.setText("не загружен")
+        self.categories_file_label.setStyleSheet("color: #666; font-size: 12px;")
+        self.results_table.setRowCount(0)
+
+        # Удаление сохранённого состояния
+        self.state_manager.clear()
+
+        self.status_bar.set_permanent("Чистая загрузка: состояние сброшено")
 
     @Slot()
     def _on_space(self) -> None:
