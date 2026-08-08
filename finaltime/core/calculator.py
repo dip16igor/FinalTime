@@ -17,10 +17,11 @@ def calculate_final_time(
        - Если у участника есть персональный старт (participant.start_offset), используем его
        - Иначе используем общий старт (common_start)
        - Если старт не задан, вычитаем 0
-    3. Результат не может быть отрицательным (минимум 0)
+    3. Прибавляем штраф в секундах (penalty_seconds)
+    4. Результат не может быть отрицательным (минимум 0)
 
-    Штрафы (penalty_seconds, penalty_points) сохраняются как поля,
-    но НЕ применяются к времени в текущей версии.
+    Штраф в баллах (penalty_points) сохраняется как поле,
+    но к времени не применяется.
     """
     # Базовое время финиша
     base_time = record.manual_time if record.manual_time is not None else record.timer_time
@@ -34,8 +35,10 @@ def calculate_final_time(
     elif common_start is not None:
         start_offset = common_start
 
-    # Итоговое время = базовое - старт
+    # Итоговое время = базовое - старт + штраф (сек)
     final = base_time - start_offset
+    if record.penalty_seconds:
+        final += timedelta(seconds=record.penalty_seconds)
 
     # Не допускаем отрицательного времени
     return max(final, timedelta(0))
