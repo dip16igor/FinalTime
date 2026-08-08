@@ -724,6 +724,8 @@ class MainWindow(QMainWindow):
         # Восстанавливаем участников
         if state.participants:
             self.participants = state.participants
+            # Восстанавливаем путь к файлу регистрации
+            self.registration_file = state.registration_file
             self.reg_file_label.setText(f"Файл регистрации: {Path(state.registration_file).name} ({len(self.participants)} участников)")
             if state.common_start_offset:
                 self.reg_file_label.setText(
