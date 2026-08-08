@@ -589,6 +589,8 @@ class MainWindow(QMainWindow):
     def _autosave(self) -> None:
         state = CompetitionState(
             registration_file=self.registration_file,
+            categories_file=self.categories_file,
+            competition_date=self.competition_date.isoformat(),
             participants=self.participants,
             finishes=self.finishes,
             timer_elapsed=self.timer.elapsed,
@@ -604,6 +606,14 @@ class MainWindow(QMainWindow):
         if state is None:
             return
 
+        # Восстанавливаем дату соревнования
+        if state.competition_date:
+            try:
+                self.competition_date = date.fromisoformat(state.competition_date)
+                self.competition_date_edit.setDate(self.competition_date)
+            except ValueError:
+                pass
+
         # Восстанавливаем участников
         if state.participants:
             self.participants = state.participants
@@ -613,6 +623,17 @@ class MainWindow(QMainWindow):
                     self.reg_file_label.text() + f" | Общий старт: +{format_time_short(state.common_start_offset)}"
                 )
             self._update_finish_button()
+
+        # Восстанавливаем категории
+        if state.categories_file and Path(state.categories_file).exists():
+            try:
+                categories = self.categories_importer.load(state.categories_file)
+                self.categories = categories
+                self.categories_file = state.categories_file
+                self.categories_file_label.setText(f"{Path(state.categories_file).name} ({len(categories)} кат.)")
+                self.categories_file_label.setStyleSheet("color: #27ae60; font-size: 12px;")
+            except Exception as e:
+                self.logger.log("WARNING", f"Failed to restore categories: {e}")
 
         # Восстанавливаем финиши
         self.finishes = state.finishes

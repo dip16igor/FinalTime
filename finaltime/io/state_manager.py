@@ -35,6 +35,8 @@ class StateManager:
         try:
             data = {
                 "registration_file": state.registration_file,
+                "categories_file": state.categories_file,
+                "competition_date": state.competition_date,
                 "participants": [
                     {
                         "number": p.number,
@@ -135,6 +137,8 @@ class StateManager:
 
             state = CompetitionState(
                 registration_file=data.get("registration_file", ""),
+                categories_file=data.get("categories_file", ""),
+                competition_date=data.get("competition_date", ""),
                 participants=participants,
                 finishes=finishes,
                 timer_elapsed=timer_elapsed,

@@ -122,6 +122,8 @@ class FinishRecord:
 class CompetitionState:
     """Состояние соревнования (для сохранения/восстановления)."""
     registration_file: str = ""
+    categories_file: str = ""
+    competition_date: str = ""
     participants: list[Participant] = field(default_factory=list)
     finishes: list[FinishRecord] = field(default_factory=list)
     timer_elapsed: timedelta = timedelta(0)
