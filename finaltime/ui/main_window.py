@@ -54,6 +54,11 @@ class MainWindow(QMainWindow):
         self.resize(1200, 800)
         self.setMinimumSize(1000, 650)
 
+        # Иконка окна
+        icon_path = _get_icon_path()
+        if icon_path.exists():
+            self.setWindowIcon(QIcon(str(icon_path)))
+
         # Сервисы
         self.logger = Logger()
         self.session = SessionManager(self.logger)
@@ -666,9 +671,8 @@ def main() -> int:
 
     # Установка иконки приложения (панель задач + заголовок окна)
     icon_path = _get_icon_path()
-    if icon_path.exists():
-        icon = QIcon(str(icon_path))
-        app.setWindowIcon(icon)
+    icon = QIcon(str(icon_path))
+    app.setWindowIcon(icon)
 
     window = MainWindow()
     window.show()

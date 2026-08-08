@@ -21,6 +21,7 @@ a = Analysis(
     binaries=[],
     datas=[
         ('version.txt', '.'),
+        ('finaltime/assets/icon.ico', 'assets'),
     ],
     hiddenimports=[
         'PySide6.QtCore',
