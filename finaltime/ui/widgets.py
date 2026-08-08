@@ -194,16 +194,24 @@ class NumberLineEdit(QLineEdit):
 
 
 class ManualTimeLineEdit(QLineEdit):
-    """Поле ввода ручного времени в формате HHH:MM:SS.sss."""
+    """Поле ввода ручного времени в формате HHH:MM:SS.S.
+
+    Показывает образец 000:00:00.0 бледно-серым цветом, когда поле пустое.
+    """
 
     finish_requested = Signal()  # Enter нажат
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setPlaceholderText("HHH:MM:SS.sss")
-        self.setMaxLength(13)  # HHH:MM:SS.sss
+        self.setPlaceholderText("000:00:00.0")
+        self.setMaxLength(11)  # HHH:MM:SS.S (3+1+2+1+2+1+1)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.setInputMask("999:99:99.999")
+
+        # Валидатор: цифры с разделителями (допускает частичный ввод)
+        validator = QRegularExpressionValidator(
+            QRegularExpression(r"\d{0,3}(:\d{0,2})?(:\d{0,2}(\.\d{0,1})?)?"), self
+        )
+        self.setValidator(validator)
 
         self.setStyleSheet("""
             QLineEdit {
@@ -216,6 +224,9 @@ class ManualTimeLineEdit(QLineEdit):
             QLineEdit:focus {
                 border-color: #4a90d9;
             }
+            QLineEdit::placeholder {
+                color: #bbb;
+            }
         """)
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
@@ -227,7 +238,7 @@ class ManualTimeLineEdit(QLineEdit):
 
     def get_time(self) -> timedelta | None:
         text = self.text().strip()
-        if not text or text == "000:00:00.000":
+        if not text:
             return None
 
         try:
@@ -241,7 +252,9 @@ class ManualTimeLineEdit(QLineEdit):
             if minutes >= 60 or seconds >= 60:
                 return None
 
-            return timedelta(hours=hours, minutes=minutes, seconds=seconds)
+            td = timedelta(hours=hours, minutes=minutes, seconds=seconds)
+            # Нулевое время считаем «не введено»
+            return td if td > timedelta(0) else None
         except ValueError:
             return None
 
@@ -250,7 +263,7 @@ class ManualTimeLineEdit(QLineEdit):
         hours = int(total // 3600)
         minutes = int((total % 3600) // 60)
         seconds = total % 60
-        self.setText(f"{hours:03d}:{minutes:02d}:{seconds:06.3f}")
+        self.setText(f"{hours:03d}:{minutes:02d}:{seconds:04.1f}")
 
     def clear_input(self) -> None:
         self.clear()
