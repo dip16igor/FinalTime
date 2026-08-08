@@ -189,27 +189,10 @@ class MainWindow(QMainWindow):
         timer_display_layout.setContentsMargins(20, 8, 20, 10)
         timer_display_layout.setSpacing(0)
 
-        # Подписи над значениями (без рамок, двоеточия невидимы для выравнивания)
-        labels_row = QHBoxLayout()
-        labels_row.setSpacing(2)
+        # Подписи и значения в сетке: подпись ровно над своим значением
         unit_style = "font-size: 15px; font-weight: bold; color: #999; font-family: 'Consolas', 'Monospace'; background: transparent;"
-        labels_row.addStretch(1)
-        for i, text in enumerate(("HHH", "MM", "SS.S")):
-            if i > 0:
-                colon_spacer = QLabel(":")
-                colon_spacer.setStyleSheet("font-size: 15px; font-weight: bold; color: transparent; font-family: 'Consolas', 'Monospace';")
-                labels_row.addWidget(colon_spacer)
-            lbl = QLabel(text)
-            lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            lbl.setStyleSheet(unit_style)
-            labels_row.addWidget(lbl)
-        labels_row.addStretch(1)
-        timer_display_layout.addLayout(labels_row)
-
-        # Значения HHH:MM:SS.S — плотно по центру, с двоеточиями
-        values_row = QHBoxLayout()
-        values_row.setSpacing(2)
         value_style = "font-size: 96px; font-family: 'Consolas', 'Monospace'; font-weight: bold; color: #222; background: transparent;"
+
         self.timer_h_label = QLabel("000")
         self.timer_h_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.timer_h_label.setStyleSheet(value_style)
@@ -219,18 +202,34 @@ class MainWindow(QMainWindow):
         self.timer_s_label = QLabel("00.0")
         self.timer_s_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.timer_s_label.setStyleSheet(value_style)
-        values_row.addStretch(1)
-        values_row.addWidget(self.timer_h_label)
-        colon1 = QLabel(":")
-        colon1.setStyleSheet(value_style)
-        values_row.addWidget(colon1)
-        values_row.addWidget(self.timer_m_label)
-        colon2 = QLabel(":")
-        colon2.setStyleSheet(value_style)
-        values_row.addWidget(colon2)
-        values_row.addWidget(self.timer_s_label)
-        values_row.addStretch(1)
-        timer_display_layout.addLayout(values_row)
+
+        grid = QGridLayout()
+        grid.setHorizontalSpacing(2)
+        grid.setVerticalSpacing(0)
+
+        # Строка 0 — подписи, строка 1 — значения (в тех же колонках)
+        for col, (unit_text, value_lbl) in enumerate(
+            (("HHH", self.timer_h_label), ("MM", self.timer_m_label), ("SS.S", self.timer_s_label))
+        ):
+            unit = QLabel(unit_text)
+            unit.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            unit.setStyleSheet(unit_style)
+            grid.addWidget(unit, 0, col * 2)
+            grid.addWidget(value_lbl, 1, col * 2)
+
+        # Колонки двоеточий между значениями
+        for col in (1, 3):
+            colon = QLabel(":")
+            colon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            colon.setStyleSheet(value_style)
+            grid.addWidget(colon, 1, col)
+
+        # Центрируем сетку по горизонтали
+        center_row = QHBoxLayout()
+        center_row.addStretch(1)
+        center_row.addLayout(grid)
+        center_row.addStretch(1)
+        timer_display_layout.addLayout(center_row)
 
         self.timer_label = timer_display  # для совместимости (используется как контейнер)
         timer_display.setMinimumWidth(300)
