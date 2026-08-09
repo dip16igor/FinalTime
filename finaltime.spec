@@ -22,6 +22,7 @@ a = Analysis(
     datas=[
         ('version.txt', '.'),
         ('finaltime/assets/icon.ico', 'assets'),
+        ('finaltime/assets/manual.pdf', 'assets'),
     ],
     hiddenimports=[
         'PySide6.QtCore',

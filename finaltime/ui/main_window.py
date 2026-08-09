@@ -8,8 +8,8 @@ from pathlib import Path
 
 import ctypes
 
-from PySide6.QtCore import QEvent, Qt, QTimer, Slot
-from PySide6.QtGui import QAction, QBitmap, QIcon, QImage, QKeySequence, QPixmap, QShortcut
+from PySide6.QtCore import QEvent, Qt, QTimer, Slot, QUrl
+from PySide6.QtGui import QAction, QBitmap, QDesktopServices, QIcon, QImage, QKeySequence, QPixmap, QShortcut
 from PySide6.QtWidgets import (
     QApplication,
     QDateEdit,
@@ -414,6 +414,12 @@ class MainWindow(QMainWindow):
 
         # Справка
         help_menu = menubar.addMenu("Справка")
+
+        act_manual = QAction("Руководство пользователя (PDF)", self)
+        act_manual.triggered.connect(self._open_manual)
+        help_menu.addAction(act_manual)
+
+        help_menu.addSeparator()
 
         act_about = QAction("О программе", self)
         act_about.triggered.connect(self._show_about)
@@ -851,8 +857,30 @@ class MainWindow(QMainWindow):
             "Судейский хронометраж и учет результатов<br><br>"
             f"Версия: {get_version()}<br>"
             "Python + PySide6 + openpyxl<br>"
-            "© 2024 FinalTime Team"
+            "© 2026 FinalTime Team<br>"
+            "<a href='mailto:dip16igor@gmail.com'>dip16igor@gmail.com</a>"
         )
+
+    def _open_manual(self) -> None:
+        """Открывает PDF-руководство пользователя."""
+        manual_path = self._get_manual_path()
+        if manual_path and manual_path.exists():
+            QDesktopServices.openUrl(QUrl.fromLocalFile(str(manual_path)))
+        else:
+            self.status_bar.show_error("Руководство пользователя не найдено")
+
+    def _get_manual_path(self) -> Path | None:
+        """Путь к PDF-мануалу (в exe — из sys._MEIPASS)."""
+        if getattr(sys, 'frozen', False):
+            base = Path(sys._MEIPASS)
+        else:
+            base = Path(__file__).parent.parent
+        candidate = base / "assets" / "manual.pdf"
+        if candidate.exists():
+            return candidate
+        # Запасной вариант: рядом с exe / в каталоге проекта
+        fallback = Path.cwd() / "finaltime" / "assets" / "manual.pdf"
+        return fallback if fallback.exists() else None
 
     def closeEvent(self, event) -> None:
         """Сохранение состояния при закрытии."""
