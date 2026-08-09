@@ -215,7 +215,7 @@ def generate_manual(output_path: Path) -> None:
     app = QApplication.instance() or QApplication([])
 
     doc = QTextDocument()
-    doc.setHtml(HTML % {"version": VERSION})
+    doc.setHtml(HTML.replace("%(version)s", VERSION))
     doc.setPageSize(QSizeF(595, 842))  # A4
 
     writer = QPdfWriter(str(output_path))
