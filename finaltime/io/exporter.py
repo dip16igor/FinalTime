@@ -1,7 +1,7 @@
 """Экспорт отчётов в Excel и CSV."""
 
 import csv
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import openpyxl
@@ -237,7 +237,7 @@ class Exporter:
         return data_start + len(records_with_places)
 
     def _build_report_filename(self, competition_name: str, ext: str) -> str:
-        """Формирует имя файла отчёта с названием соревнований."""
+        """Формирует имя файла отчёта: <название>_<дата>_<время>.<ext>."""
         name = competition_name.strip()
         if not name:
             name = "FinalTime"
@@ -245,7 +245,9 @@ class Exporter:
         import re
         name = re.sub(r'[\\/:*?"<>|]', '_', name)
         name = re.sub(r'\s+', '_', name).strip('_')
-        return f"Report_{name}_v{get_version()}.{ext}"
+        # Дата и время создания файла
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        return f"{name}_{timestamp}.{ext}"
 
     def export_csv(
         self,
