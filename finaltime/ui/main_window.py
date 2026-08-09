@@ -870,17 +870,33 @@ class MainWindow(QMainWindow):
             self.status_bar.show_error("Руководство пользователя не найдено")
 
     def _get_manual_path(self) -> Path | None:
-        """Путь к PDF-мануалу (в exe — из sys._MEIPASS)."""
+        """Путь к PDF-мануалу.
+
+        Приоритет поиска:
+        1. Рядом с exe (можно заменить мануал без пересборки);
+        2. Внутри exe (sys._MEIPASS);
+        3. В каталоге проекта (режим разработки).
+        """
+        # 1. Рядом с exe
+        if getattr(sys, 'frozen', False):
+            next_to_exe = Path(sys.executable).parent / "manual.pdf"
+            if next_to_exe.exists():
+                return next_to_exe
+
+        # 2. Внутри exe (sys._MEIPASS)
         if getattr(sys, 'frozen', False):
             base = Path(sys._MEIPASS)
-        else:
-            base = Path(__file__).parent.parent
-        candidate = base / "assets" / "manual.pdf"
-        if candidate.exists():
-            return candidate
-        # Запасной вариант: рядом с exe / в каталоге проекта
-        fallback = Path.cwd() / "finaltime" / "assets" / "manual.pdf"
-        return fallback if fallback.exists() else None
+            candidate = base / "assets" / "manual.pdf"
+            if candidate.exists():
+                return candidate
+
+        # 3. В каталоге проекта (только режим разработки)
+        if not getattr(sys, 'frozen', False):
+            candidate = Path(__file__).parent.parent / "assets" / "manual.pdf"
+            if candidate.exists():
+                return candidate
+
+        return None
 
     def closeEvent(self, event) -> None:
         """Сохранение состояния при закрытии."""
