@@ -53,7 +53,10 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-
+        # Подавляет _autosave, пока состояние не загружено полностью:
+        # сигналы textChanged/dateChanged от setText/setDate во время
+        # _restore_state иначе перезаписывают state.json частичными данными.
+        self._restoring = True
         # Версия в заголовке
         self.setWindowTitle(get_app_title())
         self.resize(1200, 800)
@@ -95,7 +98,10 @@ class MainWindow(QMainWindow):
         QApplication.instance().installEventFilter(self)
 
         # Восстановление состояния
-        self._restore_state()
+        try:
+            self._restore_state()
+        finally:
+            self._restoring = False
 
         # Автосохранение каждые 30 сек
         self._autosave_timer = QTimer(self)
@@ -772,6 +778,8 @@ class MainWindow(QMainWindow):
             self.results_table.blockSignals(False)
 
     def _autosave(self) -> None:
+        if getattr(self, "_restoring", False):
+            return
         ts = self.timer.get_state()
         state = CompetitionState(
             competition_name=self.competition_name,
