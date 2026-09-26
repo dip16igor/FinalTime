@@ -37,6 +37,7 @@ from finaltime.core import (
     TimerState,
     calculate_all_results,
     format_time_short,
+    gaps_to_leader,
     get_participant_by_number,
     parse_time_str,
     validate_manual_time,
@@ -767,12 +768,15 @@ class MainWindow(QMainWindow):
             # Считаем места по времени (для отображения в колонке Место)
             sorted_by_time = calculate_all_results(self.finishes, self.common_start)
             place_by_id = {id(r): r.place for r in sorted_by_time}
+            # Отставание от лидера общего зачёта
+            gaps = gaps_to_leader(sorted_by_time)
             # Показываем в обратном хронологическом порядке (свежие сверху)
             for record in reversed(self.finishes):
                 display_place = place_by_id.get(id(record), 0)
                 self.results_table.add_result(
                     record, display_place,
-                    self.competition_date, self.categories
+                    self.competition_date, self.categories,
+                    gaps.get(id(record)),
                 )
         finally:
             self.results_table.blockSignals(False)

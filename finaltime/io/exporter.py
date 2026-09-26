@@ -9,7 +9,7 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
 from finaltime import get_version
-from finaltime.core import AgeCategory, FinishRecord, format_time_short
+from finaltime.core import AgeCategory, FinishRecord, format_gap, format_time_short, gaps_to_leader
 
 
 class Exporter:
@@ -65,7 +65,8 @@ class Exporter:
         headers = [
             "Место", "Номер", "ФИО участника", "Разряд", "Категория",
             "Время таймера", "Ручное время",
-            "Штраф (сек)", "Штраф (баллы)", "Итоговое время"
+            "Штраф (сек)", "Штраф (баллы)", "Итоговое время",
+            "Отставание",
         ]
         ncols = len(headers)
 
@@ -131,7 +132,7 @@ class Exporter:
                 )
 
         # === НАСТРОЙКА ШИРИНЫ КОЛОНОК ===
-        column_widths = [8, 10, 35, 10, 12, 15, 15, 12, 14, 16]
+        column_widths = [8, 10, 35, 10, 12, 15, 15, 12, 14, 16, 14]
         for i, width in enumerate(column_widths, 1):
             ws.column_dimensions[get_column_letter(i)].width = width
 
@@ -158,10 +159,13 @@ class Exporter:
         categories: list[AgeCategory] | None,
         styles: dict,
         section_title: str,
+        gaps: dict | None = None,
     ) -> int:
         """Пишет секцию отчёта: заголовок секции + таблицу с данными.
 
         records_with_places: список кортежей (record, place).
+        gaps: отставание от лидера секции {id(record): timedelta};
+        если не задан — считается от лидера переданных записей.
         Возвращает номер следующей свободной строки.
         """
         ncols = len(headers)
@@ -188,6 +192,8 @@ class Exporter:
         ws.row_dimensions[start_row].height = 30
 
         # Данные
+        if gaps is None:
+            gaps = gaps_to_leader([r for r, _ in records_with_places])
         data_start = start_row + 1
         for offset, (record, place) in enumerate(records_with_places):
             row_idx = data_start + offset
@@ -221,6 +227,7 @@ class Exporter:
                 record.penalty_seconds,
                 record.penalty_points,
                 final_str,
+                format_gap(gaps.get(id(record))),
             ]
 
             for col_idx, value in enumerate(row_data, 1):
@@ -267,10 +274,11 @@ class Exporter:
             writer.writerow([
                 "Place", "Number", "Name", "Rank", "Category",
                 "Timer Time", "Manual Time",
-                "Penalty (sec)", "Penalty (pts)", "Final Time"
+                "Penalty (sec)", "Penalty (pts)", "Final Time", "Gap",
             ])
 
             # Data
+            gaps = gaps_to_leader(finishes)
             for record in finishes:
                 timer_str = format_time_short(record.timer_time)
                 manual_str = format_time_short(record.manual_time) if record.manual_time else ""
@@ -291,6 +299,7 @@ class Exporter:
                     record.penalty_seconds,
                     record.penalty_points,
                     final_str,
+                    format_gap(gaps.get(id(record))),
                 ])
 
         self.logger.log("INFO", f"CSV report saved: {output_path}")

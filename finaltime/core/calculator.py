@@ -67,6 +67,34 @@ def calculate_all_results(
     return sorted_finishes
 
 
+def gaps_to_leader(records: list[FinishRecord]) -> dict[int, timedelta]:
+    """Отставание каждого финиша от лидера по итоговому времени.
+
+    Ключ — id(record). У лидера (и при равенстве времён) gap = 0.
+    Записи без вычисленного final_time пропускаются.
+    Один и тот же хелпер используется для общего зачёта и для
+    секций категорий — лидер берётся из переданного списка.
+    """
+    times = [r.final_time for r in records if r.final_time is not None]
+    if not times:
+        return {}
+    best = min(times)
+    return {
+        id(r): r.final_time - best
+        for r in records if r.final_time is not None
+    }
+
+
+def format_gap(gap: timedelta | None) -> str:
+    """Форматирует отставание: у лидера — «—», у остальных — «+MM:SS.s»."""
+    from .models import format_time_short
+
+    if gap is None:
+        return ""
+    if gap <= timedelta(0):
+        return "—"
+    return f"+{format_time_short(gap)}"
+
 def get_participant_by_number(
     participants: list[Participant],
     number: int

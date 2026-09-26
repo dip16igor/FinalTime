@@ -3,6 +3,8 @@
 from .calculator import (
     calculate_all_results,
     calculate_final_time,
+    format_gap,
+    gaps_to_leader,
     get_participant_by_number,
     validate_manual_time,
     validate_number_input,
@@ -36,7 +38,8 @@ __all__ = [
     "TimerState",
     "calculate_final_time",
     "calculate_all_results",
-    "get_participant_by_number",
+    "format_gap",
+    "gaps_to_leader",
     "validate_number_input",
     "validate_manual_time",
 ]

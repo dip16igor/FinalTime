@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
     QTableWidgetItem,
 )
 
-from finaltime.core import AgeCategory, format_time_short
+from finaltime.core import AgeCategory, format_gap, format_time_short
 
 
 class HoldButton(QPushButton):
@@ -414,6 +414,7 @@ class ResultsTable(QTableWidget):
         ("Штраф (баллы)", 150, True),
         ("Время старта", 110, False),
         ("Итоговое время", 145, False),
+        ("Отставание", 110, False),
     ]
 
     cell_changed = Signal(int, int, str)  # row, col, new_value
@@ -478,7 +479,8 @@ class ResultsTable(QTableWidget):
         record,
         place: int,
         competition_date: date | None = None,
-        categories: list[AgeCategory] | None = None
+        categories: list[AgeCategory] | None = None,
+        gap: timedelta | None = None,
     ) -> int:
         """Добавить запись результата в таблицу."""
         row = self.rowCount()
@@ -509,6 +511,7 @@ class ResultsTable(QTableWidget):
             (str(record.penalty_points), True),
             (start_str, False),  # Время старта
             (final_str, False),
+            (format_gap(gap), False),  # Отставание от лидера
         ]
 
         for col, (text, editable) in enumerate(items_data):
@@ -523,7 +526,8 @@ class ResultsTable(QTableWidget):
         record,
         place: int,
         competition_date: date | None = None,
-        categories: list[AgeCategory] | None = None
+        categories: list[AgeCategory] | None = None,
+        gap: timedelta | None = None,
     ) -> None:
         """Обновить существующую строку."""
         timer_str = format_time_short(record.timer_time)
@@ -550,6 +554,7 @@ class ResultsTable(QTableWidget):
             str(record.penalty_points),
             start_str,
             final_str,
+            format_gap(gap),
         ]
 
         for col, text in enumerate(data):
@@ -572,4 +577,5 @@ class ResultsTable(QTableWidget):
             "penalty_points": self.item(row, 7).text() if self.item(row, 7) else "0",
             "start_time": self.item(row, 8).text() if self.item(row, 8) else "",
             "final_time": self.item(row, 9).text() if self.item(row, 9) else "",
+            "gap": self.item(row, 10).text() if self.item(row, 10) else "",
         }
